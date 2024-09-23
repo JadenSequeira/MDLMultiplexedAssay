@@ -1,5 +1,6 @@
 import cv2
 import matplotlib.pyplot as plt
+import numpy as np
 from PIL import Image
 
 
@@ -48,7 +49,7 @@ def find_nanowell(BF_img, opening):
     return centroidsBF
 
 
-def crop_squares(image, centroids, square_size, save_path):
+def crop_squares(image, centroids, square_size, save_path, offset = 0):
     for i in range(len(centroids)):
         x, y = centroids[i]
 
@@ -59,17 +60,26 @@ def crop_squares(image, centroids, square_size, save_path):
         # Crop the square
         square = image[top_left_y:top_left_y + square_size, top_left_x:top_left_x + square_size]
 
-        square_save = save_path + '_' + str(i) + '.jpg'
+        square_save = save_path + str(i + offset) + '.jpg'
         cv2.imwrite(square_save, square)
 
 
 if __name__ == "__main__":
 
     # load an image
-    img_path = 'C:\\Users\\Jaden\\Desktop\\abc.tif'
-    save_path = 'C:\\Users\\Jaden\\Desktop\\cropabc'  # save segmented nanowells
+    imgNum = 9
+    offseta = 13063
+    img_path = 'C:\\Users\\Jaden\\Desktop\\brfield\\' + str(imgNum) + '.png'
+    img_path2 = 'C:\\Users\\Jaden\\Desktop\\fluoro\\' + str(imgNum) + '.png'
+    save_path = 'C:\\Users\\Jaden\\Desktop\\croppedBrIm\\'  # save segmented nanowells
+    save_path2 = 'C:\\Users\\Jaden\\Desktop\\croppedFLIm\\'  # save segmented nanowells
+    save_path3 = 'C:\\Users\\Jaden\\Desktop\\croppedQual\\'  # save segmented nanowells
     img = cv2.imread(img_path)
+    img2 = cv2.imread(img_path2)
     BF_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    FF_img = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
+
+    ret, FF_img = cv2.threshold(FF_img.copy(), 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
     ### image preprocessing-------------------------------------------------------------------
     ret, threshold = cv2.threshold(BF_img.copy(), 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
@@ -81,6 +91,29 @@ if __name__ == "__main__":
     # remove small objects (it's good for removing noise)
     opening = cv2.morphologyEx(close, cv2.MORPH_OPEN, kernel2)
 
+    kernel3 = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
+    FF_img = cv2.morphologyEx(FF_img.copy(), cv2.MORPH_OPEN, kernel3)
+    FF_img = cv2.GaussianBlur(FF_img.copy(),(11,11),0)
+    # HH_img = np.multiply(FF_img/255, BF_img)
+    # HH_img = HH_img.astype("uint8")
+    ret, FF_img = cv2.threshold(FF_img.copy(), 100, 255, cv2.THRESH_BINARY)# + cv2.THRESH_OTSU)
+    FF = np.expand_dims(FF_img.copy(), axis=-1)
+    BF = np.expand_dims(BF_img.copy(), axis=-1)
+    cc = np.expand_dims(cv2.add(BF_img, FF_img), axis = -1)
+    cc = cc.astype("uint8")
+    bst = np.expand_dims(np.zeros((FF.shape[0], FF.shape[0])), axis = -1)
+    HH_img = np.concatenate([FF, FF, bst], axis=2)
+    HH_img = HH_img.astype("uint8")
+    JJ_img = np.concatenate([BF, BF, BF], axis=2)
+    HH = cv2.addWeighted(HH_img, 0.15, JJ_img, 0.85, 0)
+
+
+    # print(bst.shape, "a")
+    # print(HH_img.shape, "b")
+
+
 
     centroidsBF = find_nanowell(BF_img, opening)#BF_img
-    #crop_squares(BF_img, centroidsBF, 160, save_path )
+    # crop_squares(BF_img, centroidsBF, 160, save_path, offseta )
+    # crop_squares(FF_img, centroidsBF, 160, save_path2, offseta )
+    # crop_squares(HH, centroidsBF, 160, save_path3, offseta )
