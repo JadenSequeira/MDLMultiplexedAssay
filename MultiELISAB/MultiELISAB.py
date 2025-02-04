@@ -18,7 +18,7 @@ import tensorflow as tf
 from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, EarlyStopping
 from sklearn.model_selection import train_test_split
 from keras.utils import to_categorical
-
+#
 minA = 3500
 maxA = 30000
 Xmin = 100
