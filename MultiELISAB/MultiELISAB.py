@@ -1612,9 +1612,9 @@ class Ui_MainWindow(QMainWindow):
                 else:
                     aa45 = np.sum(kl[kl>threshpix]) / len(kl[kl>threshpix])
 
-                if not os.path.exists(self.fname4 + "\\predictedMaskPred\\"):
-                    os.makedirs(self.fname4 + "\\predictedMaskPred\\")
-                cv2.imwrite(self.fname4 + "\\predictedMaskPred\\" + namea, predictedMaskImg)
+                if not os.path.exists(self.fname4 + "\\predictedMaskCalibPred\\"):
+                    os.makedirs(self.fname4 + "\\predictedMaskCalibPred\\")
+                cv2.imwrite(self.fname4 + "\\predictedMaskCalibPred\\" + namea, predictedMaskImg)
                 writer.writerow([namea, aa28, aa45])
 
 
