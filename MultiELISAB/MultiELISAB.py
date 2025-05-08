@@ -1,3 +1,7 @@
+## Main GUI for Multiplexed Bead ELISA
+#  Author: Jaden Sequeira
+#  Email: jaden.sequeira609@gmail.com
+
 import csv
 import os
 import shutil
@@ -20,6 +24,7 @@ from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, EarlyStopping
 from sklearn.model_selection import train_test_split
 from keras.utils import to_categorical
 
+#Initialize all default settings
 minA = 3500
 maxA = 30000
 Xmin = 100
@@ -41,7 +46,9 @@ numberF = 0
 trainS = 0
 moveOn = False
 
+#Creates GUI window for the U-Net training and fluorescence measurement
 class Ui_MainWindow(QMainWindow):
+    #Initialize all file storage location variables
     fname = ""
     sname = ""
     fname1 = ""
@@ -56,7 +63,7 @@ class Ui_MainWindow(QMainWindow):
     fname5 = ""
     sname5 = ""
 
-
+    #Setup the GUI with GUI components
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1289, 858)
@@ -521,7 +528,7 @@ class Ui_MainWindow(QMainWindow):
         self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
-
+    #Initialize labels and default settings in GUI
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
@@ -632,27 +639,27 @@ class Ui_MainWindow(QMainWindow):
         self.lineEdit_301.setText(_translate("MainWindow", "10"))
         self.lineEdit_302.setText(_translate("MainWindow", "40"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_5), _translate("MainWindow", "Testing and Prediction"))
-    #     self.Runner.ImageUpdate.connect(self.ImageUpdateSlot)
-    #
-    # def ImageUpdateSlot(self):
-    #     self.label_18.setPixmap(QPixmap.fromImage(Image))
 
+    #Check for a key press during qualtiy inspection
     def keyPressEvent(self, event):
         if isinstance(event, QKeyEvent):
             key_text = event.text()
             print(str(key_text))
 
+    #Check if key is released after being pressed during quality inspection
     def keyReleaseEvent(self, event):
         if isinstance(event, QKeyEvent):
             key_text = event.text()
             print(str(key_text))
 
+    #Overide for checking key presses
     def event(self, event):
         if (event.type() == QEvent.KeyPress) and (event.key() == Qt.Key_Space):
             print('Parent handling space')
             return True
         return QWidget.event(self, event)
 
+    #Overide for relaying key presses
     def eventFilter(self, widget, event):
         if (event.type() == QEvent.KeyPress) and (event.key() == Qt.Key_Space):
             print('Sending space event to parent...')
@@ -660,7 +667,7 @@ class Ui_MainWindow(QMainWindow):
             return True
         return super(Ui_MainWindow, self).eventFilter(widget, event)
 
-
+    #Store the offset value for cropping
     def upoffset(self):
         global offseta
         if (self.lineEdit_106.text() != ''):
@@ -674,6 +681,7 @@ class Ui_MainWindow(QMainWindow):
                 dialog.exec()
                 return
 
+    #Computer vision function to identify nanowells
     def find_nanowell(BF, opening, save, show1 = False):
         print("params", minA, maxA, Xmin, Xmax, Ymin, Ymax)
         # area range of a square/nanowell
@@ -696,7 +704,6 @@ class Ui_MainWindow(QMainWindow):
         imgcopy = np.asarray(BF).copy()
         imgcopy = cv2.cvtColor(imgcopy, cv2.COLOR_GRAY2BGR)
 
-        # fig, ax = plt.subplots(figsize=(10, 10))
         centroidsBF = []
         half_size = nanowell_size // 2
         for c in cnts:
@@ -711,21 +718,18 @@ class Ui_MainWindow(QMainWindow):
                     # visulaize segmented nanowells
                     imgcopy = cv2.rectangle(imgcopy, (x - half_size, y - half_size),(x + half_size, y + half_size), (0, 0, 255), 3)
                     image_number += 1
-                    # ax.add_patch(square)
 
-        # ax.imshow(BF_img, cmap='gray')
-        # print('total=', image_number)
-        # plt.show()
+        #if the image is being displayed on the GUI
         if show1:
-
+            #Resize image, convert to Pixmap, and display on GUI
             imgcopy = (cv2.resize(imgcopy, (850, 750), interpolation = cv2.INTER_LINEAR)*4).astype("uint8")
-
             cv2.imwrite(save+"pic.jpg", imgcopy)
             pixmap = QPixmap(save+"pic.jpg")
             return centroidsBF, pixmap
         else:
             return centroidsBF,None
 
+    #Crop the nanowells and store as individual images
     def crop_squares(image, centroids, square_size, save_path, extend = False, offset=0):
         for i in range(len(centroids)):
             x, y = centroids[i]
@@ -745,8 +749,11 @@ class Ui_MainWindow(QMainWindow):
             else:
                 cv2.imwrite(square_save, square)
 
+    #training setup for the U-Net
     def trainSize(self):
         global trainS, numberF, moveOn
+
+        #User input error checking
 
         if self.fname2 == "":
             dialog = QMessageBox(MainWindow)
@@ -791,18 +798,22 @@ class Ui_MainWindow(QMainWindow):
             dialog.exec()
             return
 
+        #Display Testing Size in GUI
         self.label_27.setText("Testing Size:" + str(numberF-trainS))
         moveOn = True
 
-
+    #Train the U-Net
     def trainer(self):
         global trainS, numberF, moveOn
 
+        #Check if all required setup is complete
         if (not(moveOn)):
             return
 
+        #Initialize the model name
         modName = self.sname2 + "\\" + self.modelName + ".keras"
 
+        #Partition the training and testing image file names
         totalfiles = [f for f in listdir(self.fname2 + "\\goodBF\\") if isfile(join(self.fname2 + "\\goodBF\\", f))]
         afiles = []
         testfiles = []
@@ -812,21 +823,24 @@ class Ui_MainWindow(QMainWindow):
             else:
                 testfiles.append(totalfiles[p])
 
+        #Initialize the data locations
         basedir1 = self.fname2 + "\\goodBF\\"
         basedir2 = self.fname2 + "\\goodGT\\"
 
+        #Initialize storage arrays
         allImagesBF = []
         allImagesGT = []
-
         allTestImagesBF = []
         allTestImagesGT = []
-        print("b")
 
         for ss in range(len(afiles)):
+            #Read images
             img = cv2.imread(basedir1 + afiles[ss], cv2.IMREAD_COLOR)
             img2 = cv2.imread(basedir2 + afiles[ss], cv2.IMREAD_GRAYSCALE)
             allImagesBF.append(img)
             allImagesGT.append(img2)
+
+            #Augment images through rotation and reflection
 
             if(self.check_100.isChecked()):
                 img3 = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
@@ -865,7 +879,7 @@ class Ui_MainWindow(QMainWindow):
                 allImagesBF.append(img11)
                 allImagesGT.append(img12)
 
-        print("c")
+        #Initialize save paths
         save_patha = self.sname2 + "\\TestBF\\"
         save_pathb = self.sname2 + "\\TestGT\\"
         if not os.path.exists(save_patha):
@@ -873,6 +887,7 @@ class Ui_MainWindow(QMainWindow):
         if not os.path.exists(save_pathb):
             os.makedirs(save_pathb)
 
+        #Store the test images separately
         for kk in range(len(testfiles)):
             img = cv2.imread(basedir1 + testfiles[kk], cv2.IMREAD_COLOR)
             img2 = cv2.imread(basedir2 + testfiles[kk], cv2.IMREAD_GRAYSCALE)
@@ -881,8 +896,11 @@ class Ui_MainWindow(QMainWindow):
             allTestImagesBF.append(img)
             allTestImagesGT.append(img2)
 
+        #Build U0Net
         model = Model.build_unet((160, 160, 3), 2)
         print(model.summary())
+
+        #Setup Training datasets
 
         Height = 160
         Width = 160
@@ -894,12 +912,14 @@ class Ui_MainWindow(QMainWindow):
         allTestImages = []
         maskTestImages = []
 
-
+        #normalize brightfield images and convert to float32
         for img1 in allImagesBF:
             img = (img1 / 255.0)
             img = img.astype(np.float32)
             allImages.append(img)
 
+        #Generate the mask images by ensuring that 4.5um beads are 127 intensity and 2.9um beads are 255 intensity
+        #Ensure the image is a uint8 type
         for mask1 in allImagesGT:
             ret, GG = cv2.threshold(mask1.copy(), 10, 255, cv2.THRESH_BINARY)  # + cv2.THRESH_OTSU)
             ret, GG1 = cv2.threshold(mask1.copy(), 200, 255, cv2.THRESH_BINARY)  # + cv2.THRESH_OTSU)
@@ -911,19 +931,19 @@ class Ui_MainWindow(QMainWindow):
             mask = mask.astype("uint8")
             maskImages.append(mask)
 
+        #Cast to numpy arrays
         allImagesNP = np.array(allImages)
         maskImagesNP = np.array(maskImages)
         maskImagesNP = maskImagesNP.astype(int)
 
         print(allImagesNP.shape)
         print(allImagesNP.dtype)
-
         print(maskImagesNP.shape)
         print(maskImagesNP.dtype)
         print(maskImagesNP[0].dtype)
 
+        #Display an image to show an example of the data to ensure data is correctly handled
         x = cv2.resize(maskImagesNP[0], (18, 18), interpolation=cv2.INTER_NEAREST)
-
         for i in range(len(x)):
             for j in range(len(x[i])):
                 v = x[i][j]
@@ -936,14 +956,16 @@ class Ui_MainWindow(QMainWindow):
 
                 if (v == 3):
                     x[i][j] = 333
-
         print(x)
 
+        #normalize brightfield images and convert to float32 (test images)
         for img1 in allTestImagesBF:
             img = img1 / 255.0
             img = img.astype(np.float32)
             allTestImages.append(img)
 
+        #Generate the mask images by ensuring that 4.5um beads are 127 intensity and 2.9um beads are 255 intensity
+        #Ensure the image is a uint8 type (test images)
         for mask1 in allImagesGT:
             ret, GG = cv2.threshold(mask1.copy(), 10, 255, cv2.THRESH_BINARY)  # + cv2.THRESH_OTSU)
             ret, GG1 = cv2.threshold(mask1.copy(), 200, 255, cv2.THRESH_BINARY)  # + cv2.THRESH_OTSU)
@@ -955,6 +977,7 @@ class Ui_MainWindow(QMainWindow):
             mask = mask.astype("uint8")
             maskTestImages.append(mask)
 
+        #Cast to numpy arrays
         allTestImagesNP = np.array(allTestImages)
         maskTestImagesNP = np.array(maskTestImages)
         maskTestImagesNP = maskTestImagesNP.astype(int)
@@ -965,8 +988,8 @@ class Ui_MainWindow(QMainWindow):
         print(maskTestImagesNP.shape)
         print(maskTestImagesNP.dtype)
 
+        #Display an image to show an example of the data to ensure data is correctly handled
         x = cv2.resize(maskTestImagesNP[1], (24, 24), interpolation=cv2.INTER_NEAREST)
-
         for i in range(len(x)):
             for j in range(len(x[i])):
                 v = x[i][j]
@@ -986,18 +1009,16 @@ class Ui_MainWindow(QMainWindow):
         # np.save("C:\\Users\\Jaden\\Desktop\\Unet-train-mask2.npy", maskImagesNP)
 
 
-
+        #Save the testing data
         np.save(self.sname2 + "\\TestBF.npy" , allTestImagesNP)
         np.save(self.sname2 + "\\TestGT.npy", maskTestImagesNP)
 
+        #Initialize training parameters
         Weight = 160
         Width = 160
         numofCategories = 3
 
-        # from keras.utils import np_utils
-        # from keras.utils.np_utils import to_categorical
-
-
+        #Convert imags to categorical
         test = maskImagesNP[0]
         test = test - 1
         test2 = to_categorical(test, num_classes=numofCategories)
@@ -1013,7 +1034,7 @@ class Ui_MainWindow(QMainWindow):
         print(maskForTheModel.dtype)
         print(maskImagesNP.dtype)
 
-
+        #Create the final training testing dataset for training
         X_train, X_val, y_train, y_val = train_test_split(allImagesNP, maskForTheModel, test_size=0.1, random_state=42)
 
         print(X_train.shape)
@@ -1024,21 +1045,26 @@ class Ui_MainWindow(QMainWindow):
         print(X_val.shape)
         print(y_val.shape)
 
+        #Initialize image shape and classes
         shape = (160, 160, 3)
         num_classes = 3
+
+        #Modifiable parameters
         lr = 1e-4
         batch_size = 4
         epochs = 10
 
+        #Build U_Net model
         model = Model.build_unet(shape, num_classes)
         print(model.summary())
         model.compile(loss="categorical_crossentropy", optimizer=tf.keras.optimizers.Adam(lr), metrics=['accuracy'])
 
+        #Setup training parameters
         stepsPerEpoch = np.ceil(len(X_train) / batch_size)
         validationSteps = np.ceil(len(X_val) / batch_size)
 
+        #Setup training to save the best model and adapt during training
         best_model_file = modName
-
         callbacks = [
             ModelCheckpoint(best_model_file, verbose=1, save_best_only=True),
             ReduceLROnPlateau(monitor="val_loss", patience=3, factor=0.1, verbose=1, min_lr=1e-6),
@@ -1056,9 +1082,12 @@ class Ui_MainWindow(QMainWindow):
         print(X_val.shape)
         print(y_val.shape)
 
+        #Train the U-Net model
         history = model.fit(X_train, y_train, batch_size=batch_size, epochs=epochs, verbose=1,
                             validation_data=(X_val, y_val), shuffle=True, callbacks=callbacks)
 
+        #Extract accuracy and loss in training and validation over epochs
+        #Plot and save as an image
 
         acc = history.history['accuracy']
         val_acc = history.history['val_accuracy']
@@ -1082,6 +1111,8 @@ class Ui_MainWindow(QMainWindow):
         plt.title("Train and Validation Loss")
         plt.legend(loc='upper right')
         plt.savefig(self.sname2 + "\\Train_Los_plot.jpg")
+
+#File location intake functions
 
     def openFile1(self):
         self.fname = QFileDialog.getExistingDirectory(None,  "Select one or more files to open", "C:\\Windows")
@@ -1153,6 +1184,7 @@ class Ui_MainWindow(QMainWindow):
         if self.fname5:
             self.lineEdit_32.setText(str(self.fname5))
 
+    #Plotting function that combines all results and locations and stitches nanowell images together
     def combiner(self):
         if self.fname5 == "":
             dialog = QMessageBox(MainWindow)
@@ -1161,14 +1193,13 @@ class Ui_MainWindow(QMainWindow):
             dialog.exec()
             return
 
+        #Combine fluorescent results and nanowell locations into one spreadsheet and save
         df1 = pd.read_csv(self.fname5 + "\\FluoroResults.csv")
-
         df2 = pd.read_csv(self.fname5 + "\\NanowellLocations.csv")
-
         merged = df1.merge(df2, how = 'inner', on = 'Name')
-
         merged.to_csv(self.fname5 + "\\CombinedResults.csv", index=False)
 
+        #Extract fluorescent intensities and locations, and maximum intensities from combine results
         namess = merged['Name'].tolist()
         smallbead = merged['2.8Int'].tolist()
         smallbead = list(map(float, smallbead))
@@ -1187,6 +1218,8 @@ class Ui_MainWindow(QMainWindow):
             maxint28 = 1
         if(maxint45 == 0):
             maxint45 = 1
+
+        #Store the results for each image in an array where they are sorted based on tiff image
         locations = []
         intensities = []
         tiffImg = []
@@ -1206,11 +1239,15 @@ class Ui_MainWindow(QMainWindow):
                 intensities.append([[smallbead[j], largebead[j]]])
                 allnames.append([namess[j]])
 
+        #Stitch the boxes of normalized intensities and the predicted segmentations with normalized intensities
         half_size = 80
         ast = len(tiffImg)
         for p in range(len(tiffImg)):
+            #Setup progress bar
             self.label_400.setText("Progress: " + str((int(100*p/ast))))
             QtWidgets.qApp.processEvents()
+
+            #Initialize the brightfield image for each setting being stitched
             ret, images = cv2.imreadmulti(tiffImg[p], [], cv2.IMREAD_ANYDEPTH)
             br1 = cv2.cvtColor((images[0]/256).astype("uint8"), cv2.COLOR_GRAY2BGR)
             br2 = cv2.cvtColor((images[0]/256).astype("uint8"), cv2.COLOR_GRAY2BGR)
@@ -1222,11 +1259,12 @@ class Ui_MainWindow(QMainWindow):
             img4 = cv2.cvtColor((images[0]/256).astype("uint8"), cv2.COLOR_GRAY2BGR)
             predImg = cv2.cvtColor((images[0]/256).astype("uint8"), cv2.COLOR_GRAY2BGR)
             predImg2 = cv2.cvtColor((images[0]/256).astype("uint8"), cv2.COLOR_GRAY2BGR)
+
+            #Create a blank pocture for stitching images together before overlaying
             ggst = np.expand_dims(np.zeros((predImg.shape[0], predImg.shape[1])), axis=-1)
             canvas = np.concatenate([ggst, ggst, ggst], axis=2)
             canvas2 = np.concatenate([ggst, ggst, ggst], axis=2)
             for k in range(len(locations[p])):
-
                 arr28 = np.asarray(intensities[p])
                 new28 = arr28[:,0]
                 maxa28 = max(new28)
@@ -1236,23 +1274,23 @@ class Ui_MainWindow(QMainWindow):
                     maxa28 = 1
                 if (maxa45 == 0):
                     maxa45 = 1
+
+                #Normalized intensity overall and local
                 gamma1 = intensities[p][k][0]/maxint28
                 gamma2 = intensities[p][k][1]/maxint45
                 gamma3 = intensities[p][k][0]/maxa28
                 gamma4 = intensities[p][k][1]/maxa45
                 x = locations[p][k][0]
                 y = locations[p][k][1]
-
                 brt = cv2.imread(self.fname5 + "\\predictedMaskCalibPred\\" + allnames[p][k], cv2.IMREAD_GRAYSCALE)
 
+                #Stitch the prediction masks with different colors and intensities together
 
                 ret, GG = cv2.threshold(brt.copy(), 10, 255, cv2.THRESH_BINARY)  # + cv2.THRESH_OTSU)
                 ret, GG1 = cv2.threshold(brt.copy(), 200, 255, cv2.THRESH_BINARY)  # + cv2.THRESH_OTSU)
                 GGF = cv2.subtract(GG, GG1)
                 GGF = np.expand_dims(GGF.copy(), axis=-1)
-
                 bst = np.expand_dims(np.zeros((brt.shape[0], brt.shape[1])), axis=-1)
-
                 HH_img = np.concatenate([gamma2*GGF, gamma2*GGF, bst], axis=2)
                 HH_img = HH_img.astype("uint8")
                 a = GG1.copy()
@@ -1260,7 +1298,6 @@ class Ui_MainWindow(QMainWindow):
                 DD_img = np.concatenate([gamma1*GG1, bst, gamma1*GG1], axis=2)
                 DD_img = DD_img.astype("uint8")
                 finalimg = cv2.add(DD_img, HH_img)
-
                 canvas[y - half_size:y + half_size, x - half_size:x + half_size] = finalimg
 
                 HH_img1 = np.concatenate([gamma4*GGF, gamma4*GGF, bst], axis=2)
@@ -1271,12 +1308,13 @@ class Ui_MainWindow(QMainWindow):
                 finalimg1 = cv2.add(DD_img1, HH_img1)
                 canvas2[y - half_size:y + half_size, x - half_size:x + half_size] = finalimg1
 
-
+                #Stitch the boxes onto the image with normalized intensities
                 br1 = cv2.rectangle(br1, (x - half_size, y - half_size), (x + half_size, y + half_size), (128, 128, 255*gamma1), -1)
                 br2 = cv2.rectangle(br2, (x - half_size, y - half_size), (x + half_size, y + half_size), (128, 128, 255*gamma2), -1)
                 br3 = cv2.rectangle(br3, (x - half_size, y - half_size), (x + half_size, y + half_size), (128, 128, 255*gamma3), -1)
                 br4 = cv2.rectangle(br4, (x - half_size, y - half_size), (x + half_size, y + half_size), (128, 128, 255*gamma4), -1)
 
+            #Stitch the prediction masks with normalized intensities
             canvas = canvas.astype("uint8")
             predImg = cv2.addWeighted(canvas, 0.6, predImg*5, 0.4, 0)
             canvas2 = canvas2.astype("uint8")
@@ -1286,6 +1324,7 @@ class Ui_MainWindow(QMainWindow):
             img3 = cv2.addWeighted(br3, 0.6, img3, 0.4, 0)
             img4 = cv2.addWeighted(br4, 0.6, img4, 0.4, 0)
 
+            #Save the stitched images
             naem = [*tiffys[p]]
             for i in range(4):
                 del naem[-1]
@@ -1314,7 +1353,11 @@ class Ui_MainWindow(QMainWindow):
                 os.makedirs(self.fname5 + "\\LocPreds\\")
             cv2.imwrite(self.fname5 + "\\LocPreds\\" + tiffname + ".jpg", predImg2)
 
+    #Calibrates by extracting the fluorescent intensity for different biomolecule concentrations
     def calibrater(self):
+
+        #Error checking user inputs
+
         if self.fname4 == "":
             dialog = QMessageBox(MainWindow)
             dialog.setText("Please ensure an Image Directory is provided.")
@@ -1353,25 +1396,28 @@ class Ui_MainWindow(QMainWindow):
         else:
             print("Both Chosen")
 
-
+        #open the model file for predictions
         best_model_file = self.sname4
         model = tf.keras.models.load_model(best_model_file)
         print(model.summary())
 
+        #Initialize images
         allTestImagesNP = [f for f in listdir(self.fname4 + "\\NanoBFCalibPred\\") if isfile(join(self.fname4 + "\\NanoBFCalibPred\\", f))]
         concents = []
         fluovals = []
         breakconcents = []
+
+        #Write results to a CSV
         with open(self.fname4 + '\\FluoroResults.csv', 'w', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(["Name", "Glu", "Ins", "2.8Int", "4.5Int"])
 
+            # Generate segmentation predictions with model and extract the fluorescent intensity from the stored 16 bit images
             for i in range(len(allTestImagesNP)):
                 self.label_108.setText("Progress: " + str(int(i*100/len(allTestImagesNP))))
                 QtWidgets.qApp.processEvents()
                 namea = allTestImagesNP[i]
                 Image12 = cv2.imread(self.fname4 + "\\NanoBFCalibPred\\" + allTestImagesNP[i])  # , cv2.IMREAD_COLOR)#)
-                # Image = cv2.cvtColor(Image12, cv2.COLOR_GRAY2BGR)
                 splitup = [*allTestImagesNP[i]]
                 for j in range(3):
                     del splitup[-1]
@@ -1379,14 +1425,13 @@ class Ui_MainWindow(QMainWindow):
                 nameb = word1 + "tif"
                 fluo1 = cv2.imread(self.fname4 + "\\Nano28FlCalibPred\\" + nameb, cv2.IMREAD_ANYDEPTH)
                 fluo2 = cv2.imread(self.fname4 + "\\Nano45FlCalibPred\\" + nameb, cv2.IMREAD_ANYDEPTH)
-                # fluo1 = cv2.cvtColor(fluo1.copy(), cv2.COLOR_BGR2GRAY)
-                # fluo2 = cv2.cvtColor(fluo2.copy(), cv2.COLOR_BGR2GRAY)
+
+                #Extract biomolecule concentrations from nanowell image names
 
                 while splitup[-1] != "_":
                     del splitup[-1]
 
                 del splitup[-1]
-
 
                 index = 0
                 glut = []
@@ -1406,6 +1451,8 @@ class Ui_MainWindow(QMainWindow):
                 insulconc = str(''.join(insult))
                 glutconc = str(''.join(glut))
 
+                #Conduct segmentation predictions
+
                 Image = Image12 / 255.0
                 Image = Image.astype(np.float32)
 
@@ -1413,27 +1460,18 @@ class Ui_MainWindow(QMainWindow):
                 imgForModel = np.expand_dims(img, axis=0)
 
                 p = model.predict(imgForModel)
-                # print(p)
-
                 resultMask = p[0]
-                # print(resultMask.shape)
-
                 resultMask = np.argmax(resultMask, axis=-1)
-                # print(resultMask.shape)
-
                 resultMask = np.expand_dims(resultMask, axis=-1)
-                # print(resultMask.shape)
-
                 resultMask = resultMask * (255 / 3)
                 resultMask = resultMask.astype(np.uint8)
-
                 x = cv2.resize(resultMask, (16, 16), interpolation=cv2.INTER_NEAREST)
-                # print(x)
-
                 predictedMaskImg = np.concatenate([resultMask, resultMask, resultMask], axis=2)
                 predictedMaskImg = cv2.cvtColor(predictedMaskImg, cv2.COLOR_BGR2GRAY)
                 predictedMaskImg = ((predictedMaskImg / 170) * 255).astype("uint8")
                 print(predictedMaskImg.shape)
+
+                #Extract the fluorescent intensities using the 2.8um mask and the 4.5um mask and take the average
 
                 ret, GG1 = cv2.threshold(predictedMaskImg.copy(), 200, 255, cv2.THRESH_BINARY)  # + cv2.THRESH_OTSU)
                 gl = np.multiply(fluo1, (GG1 / 255).astype("uint16"))
@@ -1451,6 +1489,7 @@ class Ui_MainWindow(QMainWindow):
                 else:
                     aa45 = np.sum(kl[kl>threshpix]) / len(kl[kl>threshpix])
 
+                #Filter results for to remove incorrect segmentations from calculations
                 if (not(filt28 and aa28 != 0) and not(filt45 and aa45 != 0)):
                     newname = str(''.join(splitup))
                     if newname in concents:
@@ -1460,11 +1499,13 @@ class Ui_MainWindow(QMainWindow):
                         breakconcents.append([glutconc,insulconc])
                         fluovals.append([[aa28, aa45]])
 
+                    #Save prediction results and write results to a csv
                     if not os.path.exists(self.fname4 + "\\predictedMaskCalibPred\\"):
                         os.makedirs(self.fname4 + "\\predictedMaskCalibPred\\")
                     cv2.imwrite(self.fname4 + "\\predictedMaskCalibPred\\" + namea, predictedMaskImg)
                     writer.writerow([namea, glutconc, insulconc, aa28, aa45])
 
+        #Calculate the average results for each biomolecule concentration and write a CSV
         with open(self.fname4 + '\\FluoroAvgResults.csv', 'w', newline='') as file1:
             writer1 = csv.writer(file1)
             writer1.writerow(["Glu", "Ins", "2.8Int",  "2.8STD", "4.5Int", "4.5STD"])
@@ -1474,8 +1515,10 @@ class Ui_MainWindow(QMainWindow):
                 bbt = js[:, 1]
                 writer1.writerow([breakconcents[jp][0], breakconcents[jp][1], np.mean(aat),  np.std(aat), np.mean(bbt), np.std(bbt)])
 
-
+    #This function has the same execution as the calibrator function
+    # Except does not have filtering and average results calculations since this is for predictions
     def predictor(self):
+
         if self.fname4 == "":
             dialog = QMessageBox(MainWindow)
             dialog.setText("Please ensure an Image Directory is provided.")
@@ -1513,7 +1556,6 @@ class Ui_MainWindow(QMainWindow):
             filt28 = True
         else:
             print("Both Chosen")
-
 
         best_model_file = self.sname4
         model = tf.keras.models.load_model(best_model_file)
@@ -1540,14 +1582,11 @@ class Ui_MainWindow(QMainWindow):
                 nameb = word1 + "tif"
                 fluo1 = cv2.imread(self.fname4 + "\\Nano28FlCalibPred\\" + nameb, cv2.IMREAD_ANYDEPTH)
                 fluo2 = cv2.imread(self.fname4 + "\\Nano45FlCalibPred\\" + nameb, cv2.IMREAD_ANYDEPTH)
-                # fluo1 = cv2.cvtColor(fluo1.copy(), cv2.COLOR_BGR2GRAY)
-                # fluo2 = cv2.cvtColor(fluo2.copy(), cv2.COLOR_BGR2GRAY)
 
                 while splitup[-1] != "_":
                     del splitup[-1]
 
                 del splitup[-1]
-
 
                 index = 0
                 glut = []
@@ -1574,23 +1613,13 @@ class Ui_MainWindow(QMainWindow):
                 imgForModel = np.expand_dims(img, axis=0)
 
                 p = model.predict(imgForModel)
-                # print(p)
-
                 resultMask = p[0]
-                # print(resultMask.shape)
-
                 resultMask = np.argmax(resultMask, axis=-1)
-                # print(resultMask.shape)
-
                 resultMask = np.expand_dims(resultMask, axis=-1)
-                # print(resultMask.shape)
-
                 resultMask = resultMask * (255 / 3)
                 resultMask = resultMask.astype(np.uint8)
 
                 x = cv2.resize(resultMask, (16, 16), interpolation=cv2.INTER_NEAREST)
-                # print(x)
-
                 predictedMaskImg = np.concatenate([resultMask, resultMask, resultMask], axis=2)
                 predictedMaskImg = cv2.cvtColor(predictedMaskImg, cv2.COLOR_BGR2GRAY)
                 predictedMaskImg = ((predictedMaskImg / 170) * 255).astype("uint8")
@@ -1619,6 +1648,9 @@ class Ui_MainWindow(QMainWindow):
 
 
     def testManager(self):
+
+        #Error checking user input
+
         if self.fname3 == "":
             dialog = QMessageBox(MainWindow)
             dialog.setText("Please ensure an Image Directory is provided.")
@@ -1646,21 +1678,12 @@ class Ui_MainWindow(QMainWindow):
         if not os.path.exists(self.fname3 + "\\TestPreds\\"):
             os.makedirs(self.fname3 + "\\TestPreds\\")
 
-
-        # from keras.utils import to_categorical
-        # maskImagesForModel = to_categorical(allTestImagesNP, num_classes=NumOfCategories)
-        # maskImagesForModel = maskImagesForModel.astype(int)
-        # brigths = []
-        # groundTs = []
-        # predictions = []
-        # cv2_imshow(allTestImagesNP[1] * 255)
-        # cv2_imshow(maskTestImagesNP[1] * 128)
-
+        #Initialize Dice score arrays
         D1 = []
         D2 = []
 
+        #Predict and calculate Dice Scores
         for i in range(len(allTestImagesNP)):
-
 
             img = cv2.imread(self.fname3 + "\\TestBF\\" + allTestImagesNP[i], cv2.IMREAD_COLOR)
             img = img / 255.0
@@ -1668,47 +1691,28 @@ class Ui_MainWindow(QMainWindow):
             imgForModel = np.expand_dims(img, axis=0)
 
             maskTestImagesNP = cv2.imread(self.fname3 + "\\TestGT\\" + allTestImagesNP[i], cv2.IMREAD_GRAYSCALE)
-
-            # maskTestImagesNP = maskTestImagesNP - 1
-
             p = model.predict(imgForModel)
-            # print(p)
-
             resultMask = p[0]
-            # print(resultMask.shape)
-
             resultMask = np.argmax(resultMask, axis=-1)
-            # print(resultMask.shape)
-
             resultMask = np.expand_dims(resultMask, axis=-1)
-            # print(resultMask.shape)
-
             resultMask = resultMask * (255 / NumOfCategories)
             resultMask = resultMask.astype(np.uint8)
 
+            #Checkpoint for prediction masks
             x = cv2.resize(resultMask, (16, 16), interpolation=cv2.INTER_NEAREST)
             print(x)
-
             x = cv2.resize(maskTestImagesNP, (16, 16), interpolation=cv2.INTER_NEAREST)
             print(x)
 
+            #Save predictions
             predictedMaskImg = np.concatenate([resultMask, resultMask, resultMask], axis=2)
-
             cv2.imwrite(self.fname3 + "\\TestPreds\\" + allTestImagesNP[i], predictedMaskImg)
 
-            # brigths.append((img * 900).astype(np.uint8))
-            # groundTs.append((maskTestImagesNP[i] * 128).astype(np.uint8))
-            # predictions.append(predictedMaskImg)
-
-            # maskTestImagesNP = (maskTestImagesNP * 128).astype(np.uint8)
-
-
-
+            #Calculate Dice Scores for 2.8 um beads and 4.5 um beads for each nanowell
             a = maskTestImagesNP.astype("uint8")
             ret, GG = cv2.threshold(a.copy(), 10, 255, cv2.THRESH_BINARY)  # + cv2.THRESH_OTSU)
             ret, GGa = cv2.threshold(a.copy(), 200, 255, cv2.THRESH_BINARY)  # + cv2.THRESH_OTSU)
             GG = cv2.subtract(GG, GGa)
-            # cv2_imshow(GG)
             ret, GG1 = cv2.threshold(a.copy(), 200, 255, cv2.THRESH_BINARY)  # + cv2.THRESH_OTSU)
             b = ((cv2.cvtColor(predictedMaskImg, cv2.COLOR_BGR2GRAY) / 170) * 255).astype("uint8")
             ret, GC = cv2.threshold(b.copy(), 10, 255, cv2.THRESH_BINARY)  # + cv2.THRESH_OTSU)
@@ -1732,11 +1736,6 @@ class Ui_MainWindow(QMainWindow):
                 ast = 2 * total1 / atot
             else:
                 ast = 1
-            # if (ast < 0.6):
-            #     cv2_imshow(GG)
-            #     cv2_imshow(GC)
-            #     cv2_imshow(Brights[i])
-            #     ast = 1
 
             if btot > 0:
                 bsts = 2 * total2 / btot
@@ -1746,11 +1745,9 @@ class Ui_MainWindow(QMainWindow):
             D1.append(ast)
             D2.append(bsts)
 
-
+        #{lot the dice scores, show the average dice scores, standard deviatinos, and minimums
         plt.boxplot([D2, D1])
         plt.savefig(self.fname3 + "\\DicePlot.jpg")
-        # plt.boxplot(D2)
-        # plt.show()
         self.label_60.setText("Dice 4.5um: " + str(np.round(np.asarray(D1).mean(),2)) + ", SD: " + str(np.round(np.asarray(D1).std(),2)) + ", Min: " + str(np.round(min(D1),2)))
         self.label_59.setText("Dice 2.8um: " + str(np.round(np.asarray(D2).mean(),2)) + ", SD: " + str(np.round(np.asarray(D2).std(),2)) + ", Min: " + str(np.round(min(D2),2)))
         print(np.asarray(D1).mean())
@@ -1761,9 +1758,11 @@ class Ui_MainWindow(QMainWindow):
         print(min(D2))
 
 
-
+    #Setup for cropping of nanowells
     def generateSeg(self):
         global minA, maxA, Xmin, Xmax, Ymin, Ymax, oiter, k1, k2, Br, T28, T45, imgNum, im2b16, im3b16, BF_img, FF_img, FF_img2, onlyfiles, executed
+
+        #Error checking the user input
 
         if self.fname == "":
             dialog = QMessageBox(MainWindow)
@@ -1987,6 +1986,8 @@ class Ui_MainWindow(QMainWindow):
             dialog.exec()
             return
 
+
+        #Initialize image paths and saving paths
         img_path = self.fname + "\\" + onlyfiles[imgNum - 1]
         save = self.sname + "\\"
         save_path = self.sname + "\\BRex\\"  # save segmented nanowells
@@ -2001,21 +2002,20 @@ class Ui_MainWindow(QMainWindow):
             dialog.exec()
             return
 
-
+        #Store the different layers of the multi-layer Tif
         img = images[Br - 1]
         img2 = images[T28 - 1]
         img3 = images[T45 - 1]
         im2b16 = img2.copy()
         im3b16 = img3.copy()
 
+        #Convert to 8 bit images (for segmentation)
         img = (img/256).astype("uint8")
         img2 = (img2/256).astype("uint8")
         img3 = (img3/256).astype("uint8")
-        BF_img = img#cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        FF_img = img2#cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
-        FF_img2 = img3#cv2.cvtColor(img3, cv2.COLOR_BGR2GRAY)
-
-        #        ret, FF_img = cv2.threshold(FF_img.copy(), 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        BF_img = img
+        FF_img = img2
+        FF_img2 = img3
 
         ### image preprocessing-------------------------------------------------------------------
         ret, threshold = cv2.threshold(BF_img.copy(), 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
@@ -2028,15 +2028,19 @@ class Ui_MainWindow(QMainWindow):
         opening = cv2.morphologyEx(close, cv2.MORPH_OPEN, kernel2)
 
         centroidsBF, imagee = Ui_MainWindow.find_nanowell(BF_img, opening, save, show1 = True)  # BF_img
+        #Show the proposed croppping of the image in the GUI
         self.label_2.setPixmap(imagee)#imagee)
         executed = True
 
+    #Crops nanowells of all TIFF image stacks in a folder
     def cropNano(self):
         global offseta, k1, k2, oiter
         if (not(executed)):
             return
         onlyfiles = [f for f in listdir(self.fname) if isfile(join(self.fname, f))]
         print(onlyfiles)
+
+        #Store the locations of the cropped nanowell images and the TIFF image which the nanowell image comes from
         with open(self.sname +"\\NanowellLocations.csv", 'w', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(["Name", "TIFF", "COMX", "COMY"])
@@ -2046,11 +2050,13 @@ class Ui_MainWindow(QMainWindow):
                 QtWidgets.qApp.processEvents()
                 img_path = self.fname + "\\" + onlyfiles[j]
                 save = self.sname + "\\"
-                save_path = self.sname + "\\NanoBF\\"  # save segmented nanowells
-                save_path2 = self.sname + "\\NanoGT\\"  # save segmented nanowells
-                save_path3 = self.sname + "\\NanoQual\\"  # save segmented nanowells
-                save_path4 = self.sname + "\\Nano28Fl\\"  # save segmented nanowells
-                save_path5 = self.sname + "\\Nano45Fl\\"  # save segmented nanowells
+
+                #Generate the saving paths for the images
+                save_path = self.sname + "\\NanoBF\\"
+                save_path2 = self.sname + "\\NanoGT\\"
+                save_path3 = self.sname + "\\NanoQual\\"
+                save_path4 = self.sname + "\\Nano28Fl\\"
+                save_path5 = self.sname + "\\Nano45Fl\\"
 
                 if not os.path.exists(save_path):
                     os.makedirs(save_path)
@@ -2072,7 +2078,7 @@ class Ui_MainWindow(QMainWindow):
                     dialog.exec()
                     return
 
-
+                #Store the different layers of the multi-layer TIF
                 img = images[Br - 1]
                 img2 = images[T28 - 1]
                 img3 = images[T45 - 1]
@@ -2082,11 +2088,9 @@ class Ui_MainWindow(QMainWindow):
                 img = (img/256).astype("uint8")
                 img3a = (img2/256).astype("uint8")
                 img2a = (img3/256).astype("uint8")
-                BF_img = img#cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                FF_img = img2a#cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
-                FF_img2 = img3a#cv2.cvtColor(img3, cv2.COLOR_BGR2GRAY)
-
-                #        ret, FF_img = cv2.threshold(FF_img.copy(), 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+                BF_img = img
+                FF_img = img2a
+                FF_img2 = img3a
 
                 ### image preprocessing-------------------------------------------------------------------
                 ret, threshold = cv2.threshold(BF_img.copy(), 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
@@ -2098,13 +2102,7 @@ class Ui_MainWindow(QMainWindow):
                 # remove small objects (it's good for removing noise)
                 opening = cv2.morphologyEx(close, cv2.MORPH_OPEN, kernel2)
 
-
-
                 kernel3 = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
-                # FF_img = cv2.morphologyEx(FF_img.copy(), cv2.MORPH_OPEN, kernel3)
-                # FF_img = cv2.GaussianBlur(FF_img.copy(),(11,11),0)
-                # HH_img = np.multiply(FF_img/255, BF_img)
-                # HH_img = HH_img.astype("uint8")
                 ret, FF_img1 = cv2.threshold(FF_img.copy(), 10, 255, cv2.THRESH_BINARY)  # + cv2.THRESH_OTSU)
                 FF1 = np.expand_dims(FF_img1.copy(), axis=-1)
                 ret, FF_img23 = cv2.threshold(FF_img2.copy(), 10, 255, cv2.THRESH_BINARY)  # + cv2.THRESH_OTSU)
@@ -2114,13 +2112,12 @@ class Ui_MainWindow(QMainWindow):
                 FF2 = FF2.astype("uint8")
                 FF = cv2.add(FF1, FF2)
 
+                #Generate the ground truths and the overlaid ground truths for quality inspection
                 ret, GG = cv2.threshold(FF.copy(), 10, 255, cv2.THRESH_BINARY)  # + cv2.THRESH_OTSU)
                 ret, GG1 = cv2.threshold(FF.copy(), 200, 255, cv2.THRESH_BINARY)  # + cv2.THRESH_OTSU)
                 GGF = cv2.subtract(GG, GG1)
                 BF = np.expand_dims(BF_img.copy(), axis=-1)
                 GGF = np.expand_dims(GGF.copy(), axis=-1)
-                # cc = np.expand_dims(cv2.add(BF_img, FF), axis = -1)
-                # cc = cc.astype("uint8")
                 bst = np.expand_dims(np.zeros((FF.shape[0], FF.shape[1])), axis=-1)
                 print(bst.shape)
                 print(GGF.shape)
@@ -2131,15 +2128,14 @@ class Ui_MainWindow(QMainWindow):
                 GG1 = np.expand_dims(GG1.copy(), axis=-1)
                 DD_img = np.concatenate([GG1, bst, GG1], axis=2)
                 DD_img = DD_img.astype("uint8")
-
                 HH = cv2.addWeighted(DD_img, 0.15, SS, 0.85, 0)
 
-                # print(bst.shape, "a")
-                # print(HH_img.shape, "b")
-
-
+                #Crop the nanowell images
                 centroidsBF, imagee = Ui_MainWindow.find_nanowell(BF_img, opening, save, show1 = False)  # BF_img
+
                 if (not(self.radioButton_9.isChecked())):
+
+                    #Initialize saving folders and store images for training and testing
 
                     if not os.path.exists(save_path):
                         os.makedirs(save_path)
@@ -2164,6 +2160,8 @@ class Ui_MainWindow(QMainWindow):
                         writer.writerow([square_save, onlyfiles[j], x, y])
 
                 else:
+
+                    #Initialize saving files, then save and store images for calibrations and predictions
 
                     splitup = [*onlyfiles[j]]
                     for i in range(4):
@@ -2195,17 +2193,19 @@ class Ui_MainWindow(QMainWindow):
                     Ui_MainWindow.crop_squares(HH, centroidsBF, 160, save_path8, False, offseta)
                     Ui_MainWindow.crop_squares(im2b16, centroidsBF, 160, save_path9, True, offseta)
                     Ui_MainWindow.crop_squares(im3b16, centroidsBF, 160, save_path10, True, offseta)
-                    # print(offseta)
                     for g in range(len(centroidsBF)):
                         x, y = centroidsBF[g]
                         square_save = insulin + "_" + str(g + offseta) + '.jpg'
                         writer.writerow([square_save, onlyfiles[j], x, y])
 
-
                 offseta = offseta + len(centroidsBF)
 
+    #Display overlay images for quality inspection
     def qualInspect(self):
         global startPos, autoMax
+
+        #Error checking user input
+
         if self.fname1 == "":
             dialog = QMessageBox(MainWindow)
             dialog.setText("Please ensure an Image Directory is provided.")
@@ -2242,18 +2242,18 @@ class Ui_MainWindow(QMainWindow):
                 dialog.exec()
                 return
 
+        #Initialize saving folder names
+
         save_path = self.fname1 + "\\NanoBF\\"
         save_path2 = self.fname1 + "\\NanoGT\\"
         save_path3 = self.fname1 + "\\NanoQual\\"
         save_path4 = self.fname1 + "\\Nano28Fl\\"
         save_path5 = self.fname1 + "\\Nano45Fl\\"
-
         save_path6 = self.sname1 + "\\goodBF\\"
         save_path7 = self.sname1 + "\\goodGT\\"
         save_path8 = self.sname1 + "\\goodQual\\"
         save_path9 = self.sname1 + "\\goodQual28FF\\"
         save_path10 = self.sname1 + "\\goodQual45FF\\"
-
         save_path11 = self.sname1 + "\\badQualBF\\"
         save_path12 = self.sname1 + "\\badQual28FF\\"
         save_path13 = self.sname1 + "\\badQual45FF\\"
@@ -2284,6 +2284,7 @@ class Ui_MainWindow(QMainWindow):
             dialog.exec()
             return
 
+        #Testing functionality: extract pixel sums for determining the auto screening number
         totalSum = []
         if self.check_105.isChecked():
             for gg in range(len(allfiles)):
@@ -2303,6 +2304,9 @@ class Ui_MainWindow(QMainWindow):
             print(len(totalSum))
 
         else:
+
+            #Manual quality inspection that responds to keyboard presses and places the images in bad and good folders
+
             rej = 0
             good = 0
             total = len(allfiles) - startPos + 1
@@ -2323,9 +2327,8 @@ class Ui_MainWindow(QMainWindow):
                 joint = str(''.join(map(str,splitup)))
                 img4 = cv2.imread(save_path4 + joint + "tif", cv2.IMREAD_UNCHANGED)
                 img5 = cv2.imread(save_path5 + joint + "tif", cv2.IMREAD_UNCHANGED)
-                # print(img4.dtype)
-                # print(img5.dtype)
 
+                #Auto screening
                 FF_img = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
                 adder = FF_img.copy() / 120
                 adderSum = np.sum(adder)
@@ -2333,13 +2336,16 @@ class Ui_MainWindow(QMainWindow):
                 totalSum.append(adderSum)
                 self.label_14.setText("Images Left: " + str(imleft))
                 QtWidgets.qApp.processEvents()
+
                 if (adderSum<autoMax):
+                    #Display image in the GUI
                     ab = (cv2.resize(img3, (970, 760))*3).astype("uint8")
                     cv2.imwrite(self.sname1 + "\\pic1.jpg", ab)
                     pixmap = QPixmap(self.sname1 + "\\pic1.jpg")
                     self.label_18.setPixmap(pixmap)
                     QtWidgets.qApp.processEvents()
                     while True:
+                        #Reject image
                         if keyboard.read_key() == "w":
                             rej = rej + 1
 
@@ -2352,6 +2358,7 @@ class Ui_MainWindow(QMainWindow):
                             time.sleep(0.1)
                             break
 
+                        #Accept image
                         if keyboard.read_key() == "e":
                             good = good + 1
                             self.label_11.setText("Accepted: " + str(good))
@@ -2365,6 +2372,7 @@ class Ui_MainWindow(QMainWindow):
                             time.sleep(0.1)
                             break
                 else:
+                    #auto rejection
                     rej = rej + 1
 
                     self.label_13.setText("Rejections: " + str(rej))

@@ -3,15 +3,26 @@ from os import listdir
 from os.path import isfile, join
 import cv2
 
-base_dir = "C:\\Users\\Jaden\\Desktop\\newT\\"
+#Path location of TIFF images for renaming. Change this accordingly
+base_dir = "C:\\Users\\Jaden\\Desktop\\filename\\"
+
+
 onlyfiles = [f for f in listdir(base_dir) if isfile(join(base_dir, f))]
 print(onlyfiles)
 
+#Biomolecule 2 concentrations setup
 # B C 1000, D E 500, H I 250, J K 125, L M 62.5, N 0
 ins = [1000, 1000, 500, 500, 250, 250, 125, 125, 62.5, 62.5, 0]
+
+#Biomolecule 1 concentrations setup
 glu = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 num = 0
 numbers1 = []
+
+#Move through images in file and rename with both biomolecule concentrations depending on an identifying character
+#The identifying characters are usually due to different microwells being imaged
+#Naming convention is [ImageNumber-1]_[Concentration 1]_[Concentration 2].tif
+#For example we can have 5_0_1000.tif
 for i in onlyfiles:
     word = i
     splitup = [*word]
@@ -38,7 +49,7 @@ for i in onlyfiles:
     else:
         name = str(num) + "_" + str(num) + "_" + str(num) + ".tif"
 
-
+    #rename function
     os.rename(base_dir+"\\"+i, base_dir + "\\" + name)
 
     num = num + 1
