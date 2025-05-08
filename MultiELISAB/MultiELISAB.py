@@ -2,6 +2,7 @@ import csv
 import os
 import shutil
 import time
+import pandas as pd
 import Model
 import keyboard
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -18,13 +19,16 @@ import tensorflow as tf
 from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, EarlyStopping
 from sklearn.model_selection import train_test_split
 from keras.utils import to_categorical
-#
+
 minA = 3500
 maxA = 30000
 Xmin = 100
 Xmax = 2000
 Ymin = 100
 Ymax = 2000
+k1 = 3
+oiter = 10
+k2 = 40
 Br = -1
 T28 = -1
 T45 = -1
@@ -49,6 +53,8 @@ class Ui_MainWindow(QMainWindow):
     sname3 = ""
     fname4 = ""
     sname4 = ""
+    fname5 = ""
+    sname5 = ""
 
 
     def setupUi(self, MainWindow):
@@ -137,14 +143,35 @@ class Ui_MainWindow(QMainWindow):
         self.lineEdit_102.setGeometry(QtCore.QRect(135, 560, 90, 22))
         self.lineEdit_102.setObjectName("lineEdit_102")
         self.label_103 = QtWidgets.QLabel(self.tab)
-        self.label_103.setGeometry(QtCore.QRect(40, 600, 100, 16))
+        self.label_103.setGeometry(QtCore.QRect(30, 600, 100, 16))
         self.label_103.setObjectName("label_103")
         self.lineEdit_103 = QtWidgets.QLineEdit(self.tab)
-        self.lineEdit_103.setGeometry(QtCore.QRect(30, 620, 150, 22))
+        self.lineEdit_103.setGeometry(QtCore.QRect(30, 620, 90, 22))
         self.lineEdit_103.setObjectName("lineEdit_103")
         self.label_104 = QtWidgets.QLabel(self.tab)
-        self.label_104.setGeometry(QtCore.QRect(40, 750, 100, 16))
+        self.label_104.setGeometry(QtCore.QRect(40, 750, 90, 16))
         self.label_104.setObjectName("label_104")
+
+        self.label_300 = QtWidgets.QLabel(self.tab)
+        self.label_300.setGeometry(QtCore.QRect(150, 600, 45, 16))
+        self.label_300.setObjectName("label_300")
+        self.lineEdit_300 = QtWidgets.QLineEdit(self.tab)
+        self.lineEdit_300.setGeometry(QtCore.QRect(150, 620, 45, 22))
+        self.lineEdit_300.setObjectName("lineEdit_300")
+
+        self.label_301 = QtWidgets.QLabel(self.tab)
+        self.label_301.setGeometry(QtCore.QRect(210, 600, 45, 16))
+        self.label_301.setObjectName("label_301")
+        self.lineEdit_301 = QtWidgets.QLineEdit(self.tab)
+        self.lineEdit_301.setGeometry(QtCore.QRect(210, 620, 45, 22))
+        self.lineEdit_301.setObjectName("lineEdit_301")
+
+        self.label_302 = QtWidgets.QLabel(self.tab)
+        self.label_302.setGeometry(QtCore.QRect(270, 600, 45, 16))
+        self.label_302.setObjectName("label_302")
+        self.lineEdit_302 = QtWidgets.QLineEdit(self.tab)
+        self.lineEdit_302.setGeometry(QtCore.QRect(270, 620, 45, 22))
+        self.lineEdit_302.setObjectName("lineEdit_302")
 
 
 
@@ -173,7 +200,7 @@ class Ui_MainWindow(QMainWindow):
         self.label_69.setGeometry(QtCore.QRect(30, 270, 61, 16))
         self.label_69.setObjectName("label_69")
         self.radioButton_9 = QtWidgets.QRadioButton(self.tab)
-        self.radioButton_9.setGeometry(QtCore.QRect(90, 270, 95, 20))
+        self.radioButton_9.setGeometry(QtCore.QRect(90, 270, 200, 20))
         self.radioButton_9.setObjectName("radioButton_9")
         self.tabWidget.addTab(self.tab, "")
         self.tab_2 = QtWidgets.QWidget()
@@ -350,37 +377,59 @@ class Ui_MainWindow(QMainWindow):
         self.line_5.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.line_5.setObjectName("line_5")
         self.line_7 = QtWidgets.QFrame(self.tab_5)
-        self.line_7.setGeometry(QtCore.QRect(30, 360, 241, 16))
+        self.line_7.setGeometry(QtCore.QRect(30, 310, 241, 16))
         self.line_7.setFrameShape(QtWidgets.QFrame.HLine)
         self.line_7.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.line_7.setObjectName("line_7")
         self.label_63 = QtWidgets.QLabel(self.tab_5)
-        self.label_63.setGeometry(QtCore.QRect(30, 350, 141, 16))
+        self.label_63.setGeometry(QtCore.QRect(30, 300, 270, 16))
         self.label_63.setObjectName("label_63")
         self.lineEdit_30 = QtWidgets.QLineEdit(self.tab_5)
-        self.lineEdit_30.setGeometry(QtCore.QRect(30, 450, 141, 22))
+        self.lineEdit_30.setGeometry(QtCore.QRect(30, 400, 141, 22))
         self.lineEdit_30.setObjectName("lineEdit_30")
         self.pushButton_24 = QtWidgets.QPushButton(self.tab_5)
-        self.pushButton_24.setGeometry(QtCore.QRect(180, 450, 93, 28))
+        self.pushButton_24.setGeometry(QtCore.QRect(180, 400, 93, 28))
         self.pushButton_24.setObjectName("pushButton_24")
         self.label_64 = QtWidgets.QLabel(self.tab_5)
-        self.label_64.setGeometry(QtCore.QRect(30, 430, 201, 16))
+        self.label_64.setGeometry(QtCore.QRect(30, 380, 201, 16))
         self.label_64.setObjectName("label_64")
         self.label_65 = QtWidgets.QLabel(self.tab_5)
-        self.label_65.setGeometry(QtCore.QRect(30, 380, 201, 16))
+        self.label_65.setGeometry(QtCore.QRect(30, 330, 201, 16))
         self.label_65.setObjectName("label_65")
         self.pushButton_25 = QtWidgets.QPushButton(self.tab_5)
-        self.pushButton_25.setGeometry(QtCore.QRect(180, 400, 93, 28))
+        self.pushButton_25.setGeometry(QtCore.QRect(180, 350, 93, 28))
         self.pushButton_25.setObjectName("pushButton_25")
         self.lineEdit_31 = QtWidgets.QLineEdit(self.tab_5)
-        self.lineEdit_31.setGeometry(QtCore.QRect(30, 400, 141, 22))
+        self.lineEdit_31.setGeometry(QtCore.QRect(30, 350, 141, 22))
         self.lineEdit_31.setObjectName("lineEdit_31")
+
+        self.lineEdit_200 = QtWidgets.QLineEdit(self.tab_5)
+        self.lineEdit_200.setGeometry(QtCore.QRect(30, 435, 25, 22))
+        self.lineEdit_200.setObjectName("lineEdit_200")
+        self.label_200 = QtWidgets.QLabel(self.tab_5)
+        self.label_200.setGeometry(QtCore.QRect(60, 435, 50, 16))
+        self.label_200.setObjectName("label_200")
+        self.pushButton_200 = QtWidgets.QPushButton(self.tab_5)
+        self.pushButton_200.setGeometry(QtCore.QRect(30, 520, 251, 28))
+        self.pushButton_200.setObjectName("pushButton_200")
+        self.radioButton_200 = QtWidgets.QRadioButton(self.tab_5)
+        self.radioButton_200.setGeometry(QtCore.QRect(120, 435, 95, 20))
+        self.radioButton_200.setObjectName("radioButton_200")
+        self.radioButton_201 = QtWidgets.QRadioButton(self.tab_5)
+        self.radioButton_201.setGeometry(QtCore.QRect(170, 435, 95, 20))
+        self.radioButton_201.setObjectName("radioButton_200")
+        self.radioButton_202 = QtWidgets.QRadioButton(self.tab_5)
+        self.radioButton_202.setGeometry(QtCore.QRect(225, 435, 95, 20))
+        self.radioButton_202.setObjectName("radioButton_202")
+
+
         self.pushButton_26 = QtWidgets.QPushButton(self.tab_5)
-        self.pushButton_26.setGeometry(QtCore.QRect(30, 500, 251, 28))
+        self.pushButton_26.setGeometry(QtCore.QRect(30, 480, 251, 28))
         self.pushButton_26.setObjectName("pushButton_26")
         self.pushButton_27 = QtWidgets.QPushButton(self.tab_5)
         self.pushButton_27.setGeometry(QtCore.QRect(180, 640, 93, 28))
         self.pushButton_27.setObjectName("pushButton_27")
+        self.pushButton_27.clicked.connect(self.openFile11)
         self.label_66 = QtWidgets.QLabel(self.tab_5)
         self.label_66.setGeometry(QtCore.QRect(30, 590, 141, 16))
         self.label_66.setObjectName("label_66")
@@ -398,6 +447,13 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton_28 = QtWidgets.QPushButton(self.tab_5)
         self.pushButton_28.setGeometry(QtCore.QRect(30, 680, 251, 28))
         self.pushButton_28.setObjectName("pushButton_28")
+        self.pushButton_28.clicked.connect(self.combiner)
+        self.label_400 = QtWidgets.QLabel(self.tab_5)
+        self.label_400.setGeometry(QtCore.QRect(30, 730, 201, 16))
+        self.label_400.setObjectName("label_400")
+        self.label_401 = QtWidgets.QLabel(self.tab_5)
+        self.label_401.setGeometry(QtCore.QRect(30, 760, 500, 35))
+        self.label_401.setObjectName("label_401")
         self.label_68 = QtWidgets.QLabel(self.tab_5)
         self.label_68.setGeometry(QtCore.QRect(310, 10, 970, 760))
         self.label_68.setText("")
@@ -458,6 +514,7 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton_25.clicked.connect(self.openFile9)
         self.pushButton_24.clicked.connect(self.openFile10)
         self.pushButton_26.clicked.connect(self.calibrater)
+        self.pushButton_200.clicked.connect(self.predictor)
         print("a")
         # self.setFocusPolicy(Qt.StrongFocus)
         self.retranslateUi(MainWindow)
@@ -493,14 +550,17 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton_3.setText(_translate("MainWindow", "Generate"))
         self.pushButton_4.setText(_translate("MainWindow", "Apply"))
         self.label_69.setText(_translate("MainWindow", "Usage:"))
-        self.radioButton_9.setText(_translate("MainWindow", "Calibration"))
+        self.radioButton_9.setText(_translate("MainWindow", "Calibration and Prediction"))
+        self.radioButton_200.setText(_translate("MainWindow", "2.8"))
+        self.radioButton_201.setText(_translate("MainWindow", "4.5"))
+        self.radioButton_202.setText(_translate("MainWindow", "Both"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("MainWindow", "Nanowell Slicer"))
         self.label_11.setText(_translate("MainWindow", "Accepted:"))
         self.label_12.setText(_translate("MainWindow", "Total:"))
         self.label_13.setText(_translate("MainWindow", "Rejections: "))
         self.label_14.setText(_translate("MainWindow", "Images Left:"))
         self.pushButton_5.setText(_translate("MainWindow", "Search"))
-        self.label_15.setText(_translate("MainWindow", "Image Directory (TIFF MultiLayer)"))
+        self.label_15.setText(_translate("MainWindow", "Image Directory (Save Directory)"))
         self.label_16.setText(_translate("MainWindow", "Save Directory"))
         self.pushButton_6.setText(_translate("MainWindow", "Save"))
         self.label_17.setText(_translate("MainWindow", "Start Position"))
@@ -537,13 +597,14 @@ class Ui_MainWindow(QMainWindow):
         self.label_59.setText(_translate("MainWindow", "Dice 2.8um: "))
         self.label_60.setText(_translate("MainWindow", "Dice 4.5um:"))
         self.label_62.setText(_translate("MainWindow", "Testing"))
-        self.label_63.setText(_translate("MainWindow", "Fluorescent Calibration"))
+        self.label_63.setText(_translate("MainWindow", "Fluorescent Calibration and Prediction"))
         self.pushButton_24.setText(_translate("MainWindow", "Search"))
         self.label_64.setText(_translate("MainWindow", "Model File"))
         self.label_65.setText(_translate("MainWindow", "Data Directory"))
         self.pushButton_25.setText(_translate("MainWindow", "Search"))
-        self.pushButton_26.setText(_translate("MainWindow", "Predict"))
+        self.pushButton_26.setText(_translate("MainWindow", "Calibrate"))
         self.pushButton_27.setText(_translate("MainWindow", "Search"))
+        self.pushButton_200.setText(_translate("MainWindow", "Predict"))
         self.label_66.setText(_translate("MainWindow", "Fluorescent Predictions"))
         self.label_67.setText(_translate("MainWindow", "Data Directory"))
         self.label_101.setText(_translate("MainWindow", "Brightfield"))
@@ -551,6 +612,8 @@ class Ui_MainWindow(QMainWindow):
         self.label_100.setText(_translate("MainWindow", "4.5 um"))
         self.label_103.setText(_translate("MainWindow", "Image Number"))
         self.label_104.setText(_translate("MainWindow", "Progress: "))
+        self.label_400.setText(_translate("MainWindow", "Progress: "))
+        self.label_401.setText(_translate("MainWindow", "Please ensure file with Tiffs is named \"Tiffs\" and located in Data Directory"))
         self.label_105.setText(_translate("MainWindow", "Auto"))
         self.lineEdit_105.setText(_translate("MainWindow", "9000"))
         self.lineEdit_105.setPlaceholderText(_translate("MainWindow", "9000"))
@@ -559,7 +622,15 @@ class Ui_MainWindow(QMainWindow):
         self.pushButton_28.setText(_translate("MainWindow", "Plot"))
         self.pushButton_106.setText(_translate("MainWindow", "Enter"))
         self.label_107.setText(_translate("MainWindow", "Name:"))
+        self.label_107.setText(_translate("MainWindow", "Name:"))
         self.label_108.setText(_translate("MainWindow", "Progress: "))
+        self.label_200.setText(_translate("MainWindow", "Thresh"))
+        self.label_300.setText(_translate("MainWindow", "C-k1"))
+        self.label_301.setText(_translate("MainWindow", "C-Iter"))
+        self.label_302.setText(_translate("MainWindow", "O-k2"))
+        self.lineEdit_300.setText(_translate("MainWindow", "3"))
+        self.lineEdit_301.setText(_translate("MainWindow", "10"))
+        self.lineEdit_302.setText(_translate("MainWindow", "40"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_5), _translate("MainWindow", "Testing and Prediction"))
     #     self.Runner.ImageUpdate.connect(self.ImageUpdateSlot)
     #
@@ -1076,6 +1147,172 @@ class Ui_MainWindow(QMainWindow):
         if self.sname4:
             self.lineEdit_30.setText(str(self.sname4))
 
+    def openFile11(self):
+        self.fname5 = QFileDialog.getExistingDirectory(None,  "Select one or more files to open", "C:\\Windows")
+
+        if self.fname5:
+            self.lineEdit_32.setText(str(self.fname5))
+
+    def combiner(self):
+        if self.fname5 == "":
+            dialog = QMessageBox(MainWindow)
+            dialog.setText("Please ensure an Image Directory is provided.")
+            dialog.setWindowTitle("Error")
+            dialog.exec()
+            return
+
+        df1 = pd.read_csv(self.fname5 + "\\FluoroResults.csv")
+
+        df2 = pd.read_csv(self.fname5 + "\\NanowellLocations.csv")
+
+        merged = df1.merge(df2, how = 'inner', on = 'Name')
+
+        merged.to_csv(self.fname5 + "\\CombinedResults.csv", index=False)
+
+        namess = merged['Name'].tolist()
+        smallbead = merged['2.8Int'].tolist()
+        smallbead = list(map(float, smallbead))
+        largebead = merged['4.5Int'].tolist()
+        largebead = list(map(float, largebead))
+        Xloc = merged['COMX'].tolist()
+        Xloc = list(map(int, Xloc))
+        Yloc = merged['COMY'].tolist()
+        Yloc = list(map(int, Yloc))
+        tiffer = merged['TIFF'].tolist()
+        print(smallbead)
+        print(largebead)
+        maxint28 = max(smallbead)
+        maxint45 = max(largebead)
+        if(maxint28 == 0):
+            maxint28 = 1
+        if(maxint45 == 0):
+            maxint45 = 1
+        locations = []
+        intensities = []
+        tiffImg = []
+        tiffys = []
+        allnames = []
+        for j in range(len(smallbead)):
+            tiffname = self.fname5 + "\\Tiffs\\" + tiffer[j]
+            if tiffname in tiffImg:
+                locations[tiffImg.index(tiffname)].append([Xloc[j], Yloc[j]])
+                intensities[tiffImg.index(tiffname)].append([smallbead[j], largebead[j]])
+                allnames[tiffImg.index(tiffname)].append(namess[j])
+
+            else:
+                tiffys.append(tiffer[j])
+                tiffImg.append(tiffname)
+                locations.append([[Xloc[j], Yloc[j]]])
+                intensities.append([[smallbead[j], largebead[j]]])
+                allnames.append([namess[j]])
+
+        half_size = 80
+        ast = len(tiffImg)
+        for p in range(len(tiffImg)):
+            self.label_400.setText("Progress: " + str((int(100*p/ast))))
+            QtWidgets.qApp.processEvents()
+            ret, images = cv2.imreadmulti(tiffImg[p], [], cv2.IMREAD_ANYDEPTH)
+            br1 = cv2.cvtColor((images[0]/256).astype("uint8"), cv2.COLOR_GRAY2BGR)
+            br2 = cv2.cvtColor((images[0]/256).astype("uint8"), cv2.COLOR_GRAY2BGR)
+            br3 = cv2.cvtColor((images[0]/256).astype("uint8"), cv2.COLOR_GRAY2BGR)
+            br4 = cv2.cvtColor((images[0]/256).astype("uint8"), cv2.COLOR_GRAY2BGR)
+            img1 = cv2.cvtColor((images[0]/256).astype("uint8"), cv2.COLOR_GRAY2BGR)
+            img2 = cv2.cvtColor((images[0]/256).astype("uint8"), cv2.COLOR_GRAY2BGR)
+            img3 = cv2.cvtColor((images[0]/256).astype("uint8"), cv2.COLOR_GRAY2BGR)
+            img4 = cv2.cvtColor((images[0]/256).astype("uint8"), cv2.COLOR_GRAY2BGR)
+            predImg = cv2.cvtColor((images[0]/256).astype("uint8"), cv2.COLOR_GRAY2BGR)
+            predImg2 = cv2.cvtColor((images[0]/256).astype("uint8"), cv2.COLOR_GRAY2BGR)
+            ggst = np.expand_dims(np.zeros((predImg.shape[0], predImg.shape[1])), axis=-1)
+            canvas = np.concatenate([ggst, ggst, ggst], axis=2)
+            canvas2 = np.concatenate([ggst, ggst, ggst], axis=2)
+            for k in range(len(locations[p])):
+
+                arr28 = np.asarray(intensities[p])
+                new28 = arr28[:,0]
+                maxa28 = max(new28)
+                new45 = arr28[:,1]
+                maxa45 = max(new45)
+                if (maxa28 == 0):
+                    maxa28 = 1
+                if (maxa45 == 0):
+                    maxa45 = 1
+                gamma1 = intensities[p][k][0]/maxint28
+                gamma2 = intensities[p][k][1]/maxint45
+                gamma3 = intensities[p][k][0]/maxa28
+                gamma4 = intensities[p][k][1]/maxa45
+                x = locations[p][k][0]
+                y = locations[p][k][1]
+
+                brt = cv2.imread(self.fname5 + "\\predictedMaskCalibPred\\" + allnames[p][k], cv2.IMREAD_GRAYSCALE)
+
+
+                ret, GG = cv2.threshold(brt.copy(), 10, 255, cv2.THRESH_BINARY)  # + cv2.THRESH_OTSU)
+                ret, GG1 = cv2.threshold(brt.copy(), 200, 255, cv2.THRESH_BINARY)  # + cv2.THRESH_OTSU)
+                GGF = cv2.subtract(GG, GG1)
+                GGF = np.expand_dims(GGF.copy(), axis=-1)
+
+                bst = np.expand_dims(np.zeros((brt.shape[0], brt.shape[1])), axis=-1)
+
+                HH_img = np.concatenate([gamma2*GGF, gamma2*GGF, bst], axis=2)
+                HH_img = HH_img.astype("uint8")
+                a = GG1.copy()
+                GG1 = np.expand_dims(GG1.copy(), axis=-1)
+                DD_img = np.concatenate([gamma1*GG1, bst, gamma1*GG1], axis=2)
+                DD_img = DD_img.astype("uint8")
+                finalimg = cv2.add(DD_img, HH_img)
+
+                canvas[y - half_size:y + half_size, x - half_size:x + half_size] = finalimg
+
+                HH_img1 = np.concatenate([gamma4*GGF, gamma4*GGF, bst], axis=2)
+                HH_img1 = HH_img1.astype("uint8")
+                GG11 = np.expand_dims(a, axis=-1)
+                DD_img1 = np.concatenate([gamma3*GG11, bst, gamma3*GG11], axis=2)
+                DD_img1 = DD_img1.astype("uint8")
+                finalimg1 = cv2.add(DD_img1, HH_img1)
+                canvas2[y - half_size:y + half_size, x - half_size:x + half_size] = finalimg1
+
+
+                br1 = cv2.rectangle(br1, (x - half_size, y - half_size), (x + half_size, y + half_size), (128, 128, 255*gamma1), -1)
+                br2 = cv2.rectangle(br2, (x - half_size, y - half_size), (x + half_size, y + half_size), (128, 128, 255*gamma2), -1)
+                br3 = cv2.rectangle(br3, (x - half_size, y - half_size), (x + half_size, y + half_size), (128, 128, 255*gamma3), -1)
+                br4 = cv2.rectangle(br4, (x - half_size, y - half_size), (x + half_size, y + half_size), (128, 128, 255*gamma4), -1)
+
+            canvas = canvas.astype("uint8")
+            predImg = cv2.addWeighted(canvas, 0.6, predImg*5, 0.4, 0)
+            canvas2 = canvas2.astype("uint8")
+            predImg2 = cv2.addWeighted(canvas2, 0.6, predImg2*5, 0.4, 0)
+            img1 = cv2.addWeighted(br1, 0.6, img1, 0.4, 0)
+            img2 = cv2.addWeighted(br2, 0.6, img2, 0.4, 0)
+            img3 = cv2.addWeighted(br3, 0.6, img3, 0.4, 0)
+            img4 = cv2.addWeighted(br4, 0.6, img4, 0.4, 0)
+
+            naem = [*tiffys[p]]
+            for i in range(4):
+                del naem[-1]
+            tiffname = ''.join(naem)
+            if not os.path.exists(self.fname5 + "\\Intensity28OVR\\"):
+                os.makedirs(self.fname5 + "\\Intensity28OVR\\")
+            cv2.imwrite(self.fname5 + "\\Intensity28OVR\\" + tiffname + ".jpg", img1)
+
+            if not os.path.exists(self.fname5 + "\\Intensity45OVR\\"):
+                os.makedirs(self.fname5 + "\\Intensity45OVR\\")
+            cv2.imwrite(self.fname5 + "\\Intensity45OVR\\" + tiffname + ".jpg", img2)
+
+            if not os.path.exists(self.fname5 + "\\Intensity28LOC\\"):
+                os.makedirs(self.fname5 + "\\Intensity28LOC\\")
+            cv2.imwrite(self.fname5 + "\\Intensity28LOC\\" + tiffname + ".jpg", img3)
+
+            if not os.path.exists(self.fname5 + "\\Intensity45LOC\\"):
+                os.makedirs(self.fname5 + "\\Intensity45LOC\\")
+            cv2.imwrite(self.fname5 + "\\Intensity45LOC\\" + tiffname + ".jpg", img4)
+
+            if not os.path.exists(self.fname5 + "\\OverallPreds\\"):
+                os.makedirs(self.fname5 + "\\OverallPreds\\")
+            cv2.imwrite(self.fname5 + "\\OverallPreds\\" + tiffname + ".jpg", predImg)
+
+            if not os.path.exists(self.fname5 + "\\LocPreds\\"):
+                os.makedirs(self.fname5 + "\\LocPreds\\")
+            cv2.imwrite(self.fname5 + "\\LocPreds\\" + tiffname + ".jpg", predImg2)
 
     def calibrater(self):
         if self.fname4 == "":
@@ -1092,29 +1329,56 @@ class Ui_MainWindow(QMainWindow):
             dialog.exec()
             return
 
+        threshpix = 0
+        if (self.lineEdit_200.text() != ''):
+            try:
+                 threshpix = int(self.lineEdit_200.text())
+            except ValueError:
+                print("Please enter integer!")
+                dialog = QMessageBox(MainWindow)
+                dialog.setText("Please ensure only integers for the thresh.")
+                dialog.setWindowTitle("Error")
+                dialog.exec()
+                return
+
+        if (threshpix < 0):
+            threshpix = 0
+
+        filt45 = False
+        filt28 = False
+        if (self.radioButton_200.isChecked()):
+            filt45 = True
+        elif (self.radioButton_201.isChecked()):
+            filt28 = True
+        else:
+            print("Both Chosen")
+
+
         best_model_file = self.sname4
         model = tf.keras.models.load_model(best_model_file)
         print(model.summary())
 
-        allTestImagesNP = [f for f in listdir(self.fname4 + "\\NanoBFCalib\\") if isfile(join(self.fname4 + "\\NanoBFCalib\\", f))]
-
+        allTestImagesNP = [f for f in listdir(self.fname4 + "\\NanoBFCalibPred\\") if isfile(join(self.fname4 + "\\NanoBFCalibPred\\", f))]
+        concents = []
+        fluovals = []
+        breakconcents = []
         with open(self.fname4 + '\\FluoroResults.csv', 'w', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow(["Name", "Ins", "2.8Int", "4.5Int"])
+            writer.writerow(["Name", "Glu", "Ins", "2.8Int", "4.5Int"])
 
             for i in range(len(allTestImagesNP)):
                 self.label_108.setText("Progress: " + str(int(i*100/len(allTestImagesNP))))
                 QtWidgets.qApp.processEvents()
                 namea = allTestImagesNP[i]
-                Image12 = cv2.imread(self.fname4 + "\\NanoBFCalib\\" + allTestImagesNP[i])  # , cv2.IMREAD_COLOR)#)
+                Image12 = cv2.imread(self.fname4 + "\\NanoBFCalibPred\\" + allTestImagesNP[i])  # , cv2.IMREAD_COLOR)#)
                 # Image = cv2.cvtColor(Image12, cv2.COLOR_GRAY2BGR)
                 splitup = [*allTestImagesNP[i]]
                 for j in range(3):
                     del splitup[-1]
                 word1 = str(''.join(splitup))
                 nameb = word1 + "tif"
-                fluo1 = cv2.imread(self.fname4 + "\\Nano28FlCalib\\" + nameb, cv2.IMREAD_ANYDEPTH)
-                fluo2 = cv2.imread(self.fname4 + "\\Nano45FlCalib\\" + nameb, cv2.IMREAD_ANYDEPTH)
+                fluo1 = cv2.imread(self.fname4 + "\\Nano28FlCalibPred\\" + nameb, cv2.IMREAD_ANYDEPTH)
+                fluo2 = cv2.imread(self.fname4 + "\\Nano45FlCalibPred\\" + nameb, cv2.IMREAD_ANYDEPTH)
                 # fluo1 = cv2.cvtColor(fluo1.copy(), cv2.COLOR_BGR2GRAY)
                 # fluo2 = cv2.cvtColor(fluo2.copy(), cv2.COLOR_BGR2GRAY)
 
@@ -1122,7 +1386,25 @@ class Ui_MainWindow(QMainWindow):
                     del splitup[-1]
 
                 del splitup[-1]
-                conc = str(''.join(splitup))
+
+
+                index = 0
+                glut = []
+                insult = []
+                switcho = True
+                for g in range(len(splitup)):
+                    if (switcho):
+                        glut.append(splitup[g])
+                    else:
+                        insult.append(splitup[g])
+
+                    if (splitup[g] == '_'):
+                        index = g
+                        switcho = False
+
+                del glut[-1]
+                insulconc = str(''.join(insult))
+                glutconc = str(''.join(glut))
 
                 Image = Image12 / 255.0
                 Image = Image.astype(np.float32)
@@ -1155,19 +1437,185 @@ class Ui_MainWindow(QMainWindow):
 
                 ret, GG1 = cv2.threshold(predictedMaskImg.copy(), 200, 255, cv2.THRESH_BINARY)  # + cv2.THRESH_OTSU)
                 gl = np.multiply(fluo1, (GG1 / 255).astype("uint16"))
-                aa28 = np.sum(gl) / np.count_nonzero(gl)
+                if (len(gl[gl>threshpix]) == 0):
+                    aa28 = 0
+                else:
+                    aa28 = np.sum(gl[gl>threshpix]) / len(gl[gl>threshpix])
 
                 ret, GC1 = cv2.threshold(predictedMaskImg.copy(), 200, 255, cv2.THRESH_BINARY)  # + cv2.THRESH_OTSU)
                 ret, GC = cv2.threshold(predictedMaskImg.copy(), 10, 255, cv2.THRESH_BINARY)  # + cv2.THRESH_OTSU)
                 GA1 = cv2.subtract(GC, GC1)
                 kl = np.multiply(fluo2, (GA1 / 255).astype("uint16"))
-                aa45 = np.sum(kl) / np.count_nonzero(kl)
+                if (len(kl[kl>threshpix]) == 0):
+                    aa45 = 0
+                else:
+                    aa45 = np.sum(kl[kl>threshpix]) / len(kl[kl>threshpix])
+
+                if (not(filt28 and aa28 != 0) and not(filt45 and aa45 != 0)):
+                    newname = str(''.join(splitup))
+                    if newname in concents:
+                        fluovals[concents.index(newname)].append([aa28, aa45])
+                    else:
+                        concents.append(newname)
+                        breakconcents.append([glutconc,insulconc])
+                        fluovals.append([[aa28, aa45]])
+
+                    if not os.path.exists(self.fname4 + "\\predictedMaskCalibPred\\"):
+                        os.makedirs(self.fname4 + "\\predictedMaskCalibPred\\")
+                    cv2.imwrite(self.fname4 + "\\predictedMaskCalibPred\\" + namea, predictedMaskImg)
+                    writer.writerow([namea, glutconc, insulconc, aa28, aa45])
+
+        with open(self.fname4 + '\\FluoroAvgResults.csv', 'w', newline='') as file1:
+            writer1 = csv.writer(file1)
+            writer1.writerow(["Glu", "Ins", "2.8Int",  "2.8STD", "4.5Int", "4.5STD"])
+            for jp in range(len(concents)):
+                js = np.asarray(fluovals[jp])
+                aat = js[:, 0]
+                bbt = js[:, 1]
+                writer1.writerow([breakconcents[jp][0], breakconcents[jp][1], np.mean(aat),  np.std(aat), np.mean(bbt), np.std(bbt)])
 
 
-                if not os.path.exists(self.fname4 + "\\predictedMaskCalib\\"):
-                    os.makedirs(self.fname4 + "\\predictedMaskCalib\\")
-                cv2.imwrite(self.fname4 + "\\predictedMaskCalib\\" + namea, predictedMaskImg)
-                writer.writerow([namea, conc, aa28, aa45])
+    def predictor(self):
+        if self.fname4 == "":
+            dialog = QMessageBox(MainWindow)
+            dialog.setText("Please ensure an Image Directory is provided.")
+            dialog.setWindowTitle("Error")
+            dialog.exec()
+            return
+
+        if self.sname4 == "":
+            dialog = QMessageBox(MainWindow)
+            dialog.setText("Please ensure a model files (.keras) is provided.")
+            dialog.setWindowTitle("Error")
+            dialog.exec()
+            return
+
+        threshpix = 0
+        if (self.lineEdit_200.text() != ''):
+            try:
+                 threshpix = int(self.lineEdit_200.text())
+            except ValueError:
+                print("Please enter integer!")
+                dialog = QMessageBox(MainWindow)
+                dialog.setText("Please ensure only integers for the thresh.")
+                dialog.setWindowTitle("Error")
+                dialog.exec()
+                return
+
+        if (threshpix < 0):
+            threshpix = 0
+
+        filt45 = False
+        filt28 = False
+        if (self.radioButton_200.isChecked()):
+            filt45 = True
+        elif (self.radioButton_201.isChecked()):
+            filt28 = True
+        else:
+            print("Both Chosen")
+
+
+        best_model_file = self.sname4
+        model = tf.keras.models.load_model(best_model_file)
+        print(model.summary())
+
+        allTestImagesNP = [f for f in listdir(self.fname4 + "\\NanoBFCalibPred\\") if isfile(join(self.fname4 + "\\NanoBFCalibPred\\", f))]
+        concents = []
+        fluovals = []
+        breakconcents = []
+        with open(self.fname4 + '\\FluoroResults.csv', 'w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(["Name", "2.8Int", "4.5Int"])
+
+            for i in range(len(allTestImagesNP)):
+                self.label_108.setText("Progress: " + str(int(i*100/len(allTestImagesNP))))
+                QtWidgets.qApp.processEvents()
+                namea = allTestImagesNP[i]
+                Image12 = cv2.imread(self.fname4 + "\\NanoBFCalibPred\\" + allTestImagesNP[i])  # , cv2.IMREAD_COLOR)#)
+                # Image = cv2.cvtColor(Image12, cv2.COLOR_GRAY2BGR)
+                splitup = [*allTestImagesNP[i]]
+                for j in range(3):
+                    del splitup[-1]
+                word1 = str(''.join(splitup))
+                nameb = word1 + "tif"
+                fluo1 = cv2.imread(self.fname4 + "\\Nano28FlCalibPred\\" + nameb, cv2.IMREAD_ANYDEPTH)
+                fluo2 = cv2.imread(self.fname4 + "\\Nano45FlCalibPred\\" + nameb, cv2.IMREAD_ANYDEPTH)
+                # fluo1 = cv2.cvtColor(fluo1.copy(), cv2.COLOR_BGR2GRAY)
+                # fluo2 = cv2.cvtColor(fluo2.copy(), cv2.COLOR_BGR2GRAY)
+
+                while splitup[-1] != "_":
+                    del splitup[-1]
+
+                del splitup[-1]
+
+
+                index = 0
+                glut = []
+                insult = []
+                switcho = True
+                for g in range(len(splitup)):
+                    if (switcho):
+                        glut.append(splitup[g])
+                    else:
+                        insult.append(splitup[g])
+
+                    if (splitup[g] == '_'):
+                        index = g
+                        switcho = False
+
+                del glut[-1]
+                insulconc = str(''.join(insult))
+                glutconc = str(''.join(glut))
+
+                Image = Image12 / 255.0
+                Image = Image.astype(np.float32)
+
+                img = Image.copy()
+                imgForModel = np.expand_dims(img, axis=0)
+
+                p = model.predict(imgForModel)
+                # print(p)
+
+                resultMask = p[0]
+                # print(resultMask.shape)
+
+                resultMask = np.argmax(resultMask, axis=-1)
+                # print(resultMask.shape)
+
+                resultMask = np.expand_dims(resultMask, axis=-1)
+                # print(resultMask.shape)
+
+                resultMask = resultMask * (255 / 3)
+                resultMask = resultMask.astype(np.uint8)
+
+                x = cv2.resize(resultMask, (16, 16), interpolation=cv2.INTER_NEAREST)
+                # print(x)
+
+                predictedMaskImg = np.concatenate([resultMask, resultMask, resultMask], axis=2)
+                predictedMaskImg = cv2.cvtColor(predictedMaskImg, cv2.COLOR_BGR2GRAY)
+                predictedMaskImg = ((predictedMaskImg / 170) * 255).astype("uint8")
+                print(predictedMaskImg.shape)
+
+                ret, GG1 = cv2.threshold(predictedMaskImg.copy(), 200, 255, cv2.THRESH_BINARY)  # + cv2.THRESH_OTSU)
+                gl = np.multiply(fluo1, (GG1 / 255).astype("uint16"))
+                if (len(gl[gl>threshpix]) == 0):
+                    aa28 = 0
+                else:
+                    aa28 = np.sum(gl[gl>threshpix]) / len(gl[gl>threshpix])
+
+                ret, GC1 = cv2.threshold(predictedMaskImg.copy(), 200, 255, cv2.THRESH_BINARY)  # + cv2.THRESH_OTSU)
+                ret, GC = cv2.threshold(predictedMaskImg.copy(), 10, 255, cv2.THRESH_BINARY)  # + cv2.THRESH_OTSU)
+                GA1 = cv2.subtract(GC, GC1)
+                kl = np.multiply(fluo2, (GA1 / 255).astype("uint16"))
+                if (len(kl[kl>threshpix]) == 0):
+                    aa45 = 0
+                else:
+                    aa45 = np.sum(kl[kl>threshpix]) / len(kl[kl>threshpix])
+
+                if not os.path.exists(self.fname4 + "\\predictedMaskPred\\"):
+                    os.makedirs(self.fname4 + "\\predictedMaskPred\\")
+                cv2.imwrite(self.fname4 + "\\predictedMaskPred\\" + namea, predictedMaskImg)
+                writer.writerow([namea, aa28, aa45])
 
 
     def testManager(self):
@@ -1315,7 +1763,7 @@ class Ui_MainWindow(QMainWindow):
 
 
     def generateSeg(self):
-        global minA, maxA, Xmin, Xmax, Ymin, Ymax, Br, T28, T45, imgNum, im2b16, im3b16, BF_img, FF_img, FF_img2, onlyfiles, executed
+        global minA, maxA, Xmin, Xmax, Ymin, Ymax, oiter, k1, k2, Br, T28, T45, imgNum, im2b16, im3b16, BF_img, FF_img, FF_img2, onlyfiles, executed
 
         if self.fname == "":
             dialog = QMessageBox(MainWindow)
@@ -1474,12 +1922,54 @@ class Ui_MainWindow(QMainWindow):
                 dialog.exec()
                 return
 
+        if (self.lineEdit_300.text() != ''):
+            try:
+                k1 = int(self.lineEdit_300.text())
+            except ValueError:
+                print("Please enter integer!")
+                dialog = QMessageBox(MainWindow)
+                dialog.setText("Please ensure only integers are entered and all fields complete.")
+                dialog.setWindowTitle("Error")
+                dialog.exec()
+                return
+
+        if (self.lineEdit_301.text() != ''):
+            try:
+                oiter = int(self.lineEdit_301.text())
+            except ValueError:
+                print("Please enter integer!")
+                dialog = QMessageBox(MainWindow)
+                dialog.setText("Please ensure only integers are entered and all fields complete.")
+                dialog.setWindowTitle("Error")
+                dialog.exec()
+                return
+
+        if (self.lineEdit_302.text() != ''):
+            try:
+                k2 = int(self.lineEdit_302.text())
+            except ValueError:
+                print("Please enter integer!")
+                dialog = QMessageBox(MainWindow)
+                dialog.setText("Please ensure only integers are entered and all fields complete.")
+                dialog.setWindowTitle("Error")
+                dialog.exec()
+                return
+
+
         if (Br <= 0 or T28 <= 0 or T45 <= 0 or imgNum <= 0):
             dialog = QMessageBox(MainWindow)
             dialog.setText("Please ensure Brightfield, 2.8 um, 4.5 um, and image Numer are greater than 0.")
             dialog.setWindowTitle("Error")
             dialog.exec()
             return
+
+        if (k1 <= 0 or oiter <= 0 or k2 <= 0):
+            dialog = QMessageBox(MainWindow)
+            dialog.setText("Please ensure C-k1, C-iter, O-k2 are greater than 0.")
+            dialog.setWindowTitle("Error")
+            dialog.exec()
+            return
+
 
         if (maxA <= minA or Xmax <= Xmin or Ymax <= Ymin):
             dialog = QMessageBox(MainWindow)
@@ -1530,19 +2020,19 @@ class Ui_MainWindow(QMainWindow):
         ### image preprocessing-------------------------------------------------------------------
         ret, threshold = cv2.threshold(BF_img.copy(), 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
         # Creates a 4x4 rectangular structuring element for morphological operations
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (6, 6))
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (k1, k1))
         # close small holes inside the foreground objects or small black points on the object.
-        close = cv2.morphologyEx(threshold, cv2.MORPH_CLOSE, kernel, iterations=5)
-        kernel2 = cv2.getStructuringElement(cv2.MORPH_RECT, (40, 40))
+        close = cv2.morphologyEx(threshold, cv2.MORPH_CLOSE, kernel, iterations=oiter)
+        kernel2 = cv2.getStructuringElement(cv2.MORPH_RECT, (k2, k2))
         # remove small objects (it's good for removing noise)
         opening = cv2.morphologyEx(close, cv2.MORPH_OPEN, kernel2)
 
         centroidsBF, imagee = Ui_MainWindow.find_nanowell(BF_img, opening, save, show1 = True)  # BF_img
-        self.label_2.setPixmap(imagee)
+        self.label_2.setPixmap(imagee)#imagee)
         executed = True
 
     def cropNano(self):
-        global offseta
+        global offseta, k1, k2, oiter
         if (not(executed)):
             return
         onlyfiles = [f for f in listdir(self.fname) if isfile(join(self.fname, f))]
@@ -1601,10 +2091,10 @@ class Ui_MainWindow(QMainWindow):
                 ### image preprocessing-------------------------------------------------------------------
                 ret, threshold = cv2.threshold(BF_img.copy(), 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
                 # Creates a 4x4 rectangular structuring element for morphological operations
-                kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (6, 6))
+                kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (k1, k1))
                 # close small holes inside the foreground objects or small black points on the object.
-                close = cv2.morphologyEx(threshold, cv2.MORPH_CLOSE, kernel, iterations=5)
-                kernel2 = cv2.getStructuringElement(cv2.MORPH_RECT, (40, 40))
+                close = cv2.morphologyEx(threshold, cv2.MORPH_CLOSE, kernel, iterations=oiter)
+                kernel2 = cv2.getStructuringElement(cv2.MORPH_RECT, (k2, k2))
                 # remove small objects (it's good for removing noise)
                 opening = cv2.morphologyEx(close, cv2.MORPH_OPEN, kernel2)
 
@@ -1683,22 +2173,22 @@ class Ui_MainWindow(QMainWindow):
                     del splitup[0]
                     insulin = str(''.join(splitup))
 
-                    save_path6 = self.sname + "\\NanoBFCalib\\" + insulin + "_"  # save segmented nanowells
-                    save_path7 = self.sname + "\\NanoGTCalib\\" + insulin + "_" # save segmented nanowells
-                    save_path8 = self.sname + "\\NanoQualCalib\\" + insulin + "_" # save segmented nanowells
-                    save_path9 = self.sname + "\\Nano28FlCalib\\" + insulin + "_" # save segmented nanowells
-                    save_path10 = self.sname + "\\Nano45FlCalib\\" + insulin + "_" # save segmented nanowells
+                    save_path6 = self.sname + "\\NanoBFCalibPred\\" + insulin + "_"  # save segmented nanowells
+                    save_path7 = self.sname + "\\NanoGTCalibPred\\" + insulin + "_" # save segmented nanowells
+                    save_path8 = self.sname + "\\NanoQualCalibPred\\" + insulin + "_" # save segmented nanowells
+                    save_path9 = self.sname + "\\Nano28FlCalibPred\\" + insulin + "_" # save segmented nanowells
+                    save_path10 = self.sname + "\\Nano45FlCalibPred\\" + insulin + "_" # save segmented nanowells
 
-                    if not os.path.exists(self.sname + "\\NanoBFCalib\\"):
-                        os.makedirs(self.sname + "\\NanoBFCalib\\")
-                    if not os.path.exists(self.sname + "\\NanoGTCalib\\"):
-                        os.makedirs(self.sname + "\\NanoGTCalib\\")
-                    if not os.path.exists(self.sname + "\\NanoQualCalib\\"):
-                        os.makedirs(self.sname + "\\NanoQualCalib\\")
-                    if not os.path.exists(self.sname + "\\Nano28FlCalib\\"):
-                        os.makedirs(self.sname + "\\Nano28FlCalib\\")
-                    if not os.path.exists(self.sname + "\\Nano45FlCalib\\"):
-                        os.makedirs(self.sname + "\\Nano45FlCalib\\")
+                    if not os.path.exists(self.sname + "\\NanoBFCalibPred\\"):
+                        os.makedirs(self.sname + "\\NanoBFCalibPred\\")
+                    if not os.path.exists(self.sname + "\\NanoGTCalibPred\\"):
+                        os.makedirs(self.sname + "\\NanoGTCalibPred\\")
+                    if not os.path.exists(self.sname + "\\NanoQualCalibPred\\"):
+                        os.makedirs(self.sname + "\\NanoQualCalibPred\\")
+                    if not os.path.exists(self.sname + "\\Nano28FlCalibPred\\"):
+                        os.makedirs(self.sname + "\\Nano28FlCalibPred\\")
+                    if not os.path.exists(self.sname + "\\Nano45FlCalibPred\\"):
+                        os.makedirs(self.sname + "\\Nano45FlCalibPred\\")
 
                     Ui_MainWindow.crop_squares(BF_img, centroidsBF, 160, save_path6, False, offseta)
                     Ui_MainWindow.crop_squares(FF, centroidsBF, 160, save_path7, False, offseta)
