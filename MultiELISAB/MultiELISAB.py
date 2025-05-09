@@ -1503,7 +1503,17 @@ class Ui_MainWindow(QMainWindow):
                     if not os.path.exists(self.fname4 + "\\predictedMaskCalibPred\\"):
                         os.makedirs(self.fname4 + "\\predictedMaskCalibPred\\")
                     cv2.imwrite(self.fname4 + "\\predictedMaskCalibPred\\" + namea, predictedMaskImg)
-                    writer.writerow([namea, glutconc, insulconc, aa28, aa45])
+
+                    if not os.path.exists(self.fname4 + "\\NIS28\\"):
+                        os.makedirs(self.fname4 + "\\NIS28\\")
+                    cv2.imwrite(self.fname4 + "\\NIS28\\" + nameb, gl)
+                    print(gl.dtype)
+
+                    if not os.path.exists(self.fname4 + "\\NIS45\\"):
+                        os.makedirs(self.fname4 + "\\NIS45\\")
+                    cv2.imwrite(self.fname4 + "\\NIS45\\" + nameb,kl)
+                    print(kl.dtype)
+
 
         #Calculate the average results for each biomolecule concentration and write a CSV
         with open(self.fname4 + '\\FluoroAvgResults.csv', 'w', newline='') as file1:
@@ -1645,6 +1655,16 @@ class Ui_MainWindow(QMainWindow):
                     os.makedirs(self.fname4 + "\\predictedMaskCalibPred\\")
                 cv2.imwrite(self.fname4 + "\\predictedMaskCalibPred\\" + namea, predictedMaskImg)
                 writer.writerow([namea, aa28, aa45])
+
+                if not os.path.exists(self.fname4 + "\\NIS28\\"):
+                    os.makedirs(self.fname4 + "\\NIS28\\")
+                cv2.imwrite(self.fname4 + "\\NIS28\\" + nameb, gl)
+                print(gl.dtype)
+
+                if not os.path.exists(self.fname4 + "\\NIS45\\"):
+                    os.makedirs(self.fname4 + "\\NIS45\\")
+                cv2.imwrite(self.fname4 + "\\NIS45\\" + nameb, kl)
+                print(kl.dtype)
 
 
     def testManager(self):
