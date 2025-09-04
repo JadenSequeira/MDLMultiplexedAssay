@@ -4,7 +4,7 @@ This way users can seperate the beads with the same fluorescence into separate f
 For more information, please see the NIS Fluorescence Measurement Section in the User Manual.
 
 # Multiplexed ELISA on a Bead Assays 
-### Author and Developer: Jaden Sequeira
+### Developed by Jaden Sequeira
 
 
 Microscopy based multiplexed assays are an important tool for comparing stem cell
@@ -18,10 +18,39 @@ intensity of each biomolecule can then be calculated using the segmented masks o
 bead sizes. Finally, the mean fluorescence intensities can be converted into concentrations for
 each biomolecule using standard curves.
 
+Pancreatic beta cells are pancreatic cells that secrete insulin – an important biomolecule
+for body processes such as managing blood glucose levels through cellular glucose uptake. Type
+1 Diabetes (T1D) is an autoimmune disease where pancreatic cells are destroyed by the immune
+system, thus resulting in less insulin production. Current treatments include lifelong insulin injections,
+and more recently, pancreatic beta cell transplants. Donor beta cells are in short supply and thus there is
+a critical need for new beta cells sources. Recent research has focussed on the differentiation 
+and genetic engineering of pluripotent stem cells into stem cell derived beta cells (SCβ) to be used as a new source for beta cell transplants. 
 
 ![alt text](Images/Image1.JPG)
 
 
+Recently, nanowell technology and fluorescent microscopy was used to investigate
+the heterogeneity of glucose stimulated insulin secretion (GSIS) for single pancreatic beta cells.
+This study provided insight into the characteristics required of stem cell derived beta cells before
+they can be used as a transplant treatment for Type 1 Diabetes. However, there is still a need for
+better characterization of donor and SCβ cells regarding their insulin, glucagon, and somatostatin
+hormone secretion levels. This will help in understanding if SCβ cells provide the same secretion
+standards of donor cells, or if alternative methods such as secretion-based cell
+selection if needed.
+
+![alt text](Images/Image2.JPG)
+
+Multiplexed single cell secretion assays can be used to profile donor and stem cell
+derived islet cells through their secretion of insulin, glucagon, and somatostatin. This can be
+done at the single cell level using nanowells to separate the cells and microscopy to image the
+fluorescence of detection beads in each nanowell. These detection beads increase in fluorescence
+intensity when the biomolecule of interest increases (e.g. insulin). However, multiplexed single
+cell assays that employ microscopy are usually limited to detecting 3-4 different biomolecules. 
+This is due to the limited fluorescence emission range and the fact that fluorophores attached to
+the beads emit a range of fluorescent wavelengths. Generally, when conducting single cell
+assays, two fluorescence stains are used to check if the cell is dead or alive. As a result, there is
+not enough space on the fluorescence emission range for an additional three fluorophores for
+insulin, glucagon, and somatostatin.
 
 
 ## Software Overview
