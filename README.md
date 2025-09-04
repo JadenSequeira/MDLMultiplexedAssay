@@ -3,8 +3,8 @@ The software can now store 16bit Tiff images of the separated fluorescences of 2
 This way users can seperate the beads with the same fluorescence into separate fluorecence images for each bead size and input each image to measure fluorescence using NIS. 
 For more information, please see the NIS Fluorescence Measurement Section in the User Manual.
 
-# Multiplexed ELISA on a Bead Assays
-### Jaden Sequeira
+# Multiplexed ELISA on a Bead Assays ### Jaden Sequeira
+
 
 Microscopy based multiplexed assays are an important tool for comparing stem cell
 derived beta cells and donor beta cells through their secretion profiles. The limited fluorescent
