@@ -128,22 +128,21 @@ TensorFlow package due to its specific version requirement.
 ![alt text](Images/Image6.JPG)
 ![alt text](Images/Image7.JPG)
 
-### 2. Segmentation Training and Testing
-#### Quality Inspection of Training Data
+### 2. Quality Inspection of Training Data
 ![alt text](Images/Image14.JPG)
-#### 3. Training Data Generation
+### 3. Training Data Generation
 ![alt text](Images/Image8.JPG)
-#### 4. Image Augmentation (Increasing Training Data)
+### 4. Image Augmentation (Increasing Training Data)
 ![alt text](Images/Image9.JPG)
-#### 5. Segmentation Training
+### 5. Segmentation Training
 ![alt text](Images/Image10.JPG)
-#### 6. Segmentation Testing
+### 6. Segmentation Testing
 ![alt text](Images/Image11.JPG)
-#### 7. Segmentation Prediction
+### 7. Segmentation Prediction
 ![alt text](Images/Image12.JPG)
-#### 8. Standard Curve Generation
+### 8. Standard Curve Generation
 ![alt text](Images/Image13.JPG)
-#### 9.Re-stitching Segmented Nanowells (Plotting)
+### 9. Re-stitching Segmented Nanowells (Plotting)
 ![alt text](Images/Image15.JPG)
 
 For more information on using each function in the software, please see the user manual located in the Documentation Folder.
